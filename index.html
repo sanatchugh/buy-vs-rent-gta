@@ -50,7 +50,7 @@
   /* Masthead */
   header.mast{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:24px;
     display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
-  .mast h1{font-size:clamp(26px,4vw,40px);letter-spacing:-.03em;font-weight:800;margin:0;line-height:1}
+  .mast h1{font-size:clamp(34px,5.5vw,56px);letter-spacing:-.035em;font-weight:800;margin:0;line-height:1.02}
   .mast h1 .b{color:var(--buy)} .mast h1 .r{color:var(--rent)}
   .mast .sub{color:var(--muted);font-size:13px;max-width:42ch;margin-top:6px}
   .mast .tag{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
@@ -191,7 +191,7 @@
         </div>
         <div class="field">
           <label>Down payment (cash)</label>
-          <div class="inrow"><span class="pre">$</span><input type="number" id="down" value="65000" step="1000" min="0"></div>
+          <div class="inrow"><span class="pre">$</span><input type="number" id="down" value="90000" step="1000" min="0"></div>
           <div class="hint" id="downHint"></div>
         </div>
         <div class="field">
@@ -344,7 +344,7 @@
           </div>
           <div class="field">
             <label>Max upfront budget</label>
-            <div class="inrow"><span class="pre">$</span><input type="number" id="budget" value="75000" step="1000"></div>
+            <div class="inrow"><span class="pre">$</span><input type="number" id="budget" value="100000" step="1000"></div>
           </div>
         </div>
 
@@ -822,9 +822,9 @@ function gapAnnual(){
 }
 
 // defaults for reset
-const DEFAULTS={price:900000,down:65000,rate1:4.09,rate2:4.50,tax:0.90,taxG:4,fee:650,feeG:4,
+const DEFAULTS={price:900000,down:90000,rate1:4.09,rate2:4.50,tax:0.90,taxG:4,fee:650,feeG:4,
   maint:1.0,maintG:4,ins:1500,insG:6,appr:3,sell:5.5,legal:2500,rent:3800,rentG:3.9,tenIns:25,
-  investAmt:23000,inv:6,cgt:50,horizon:5,budget:75000};
+  investAmt:23000,inv:6,cgt:50,horizon:5,budget:100000};
 $("resetBtn").addEventListener("click",()=>{
   for(const k in DEFAULTS) $(k).value=DEFAULTS[k];
   $("ftb").checked=true;
