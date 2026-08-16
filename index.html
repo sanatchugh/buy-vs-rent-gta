@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<!--
+  Buy vs Rent — GTA Comparison
+  A self-contained rent-versus-buy calculator for the Greater Toronto Area.
+
+  Authors:  Sanat Chugh (github.com/sanatchugh)
+            Claude (Anthropic)
+  License:  MIT — see LICENSE
+  Source:   https://github.com/sanatchugh/buy-vs-rent-gta
+
+  Single file, no dependencies, no tracking. Runs entirely in the browser.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buy vs Rent — GTA Comparison</title>
+<meta name="description" content="A free, open-source calculator comparing the total cost of buying versus renting the same home in the Greater Toronto Area — mortgage, taxes, fees, appreciation, and the investment alternative. Runs entirely in your browser.">
+<meta name="author" content="Sanat Chugh & Claude (Anthropic)">
+<meta name="theme-color" content="#0E7C66">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBFN0M2NiIvPjxwYXRoIGQ9Ik0xNiA2LjVsOSA3djExLjVoLTUuNXYtNi41aC03djYuNUg3VjEzLjV6IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iMjEuNSIgeT0iNiIgd2lkdGg9IjMiIGhlaWdodD0iNiIgcng9IjEiIGZpbGw9IiNDNDgxM0EiLz48L3N2Zz4=">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Buy vs Rent — GTA Comparison">
+<meta property="og:description" content="A free, open-source rent-vs-buy calculator for the Greater Toronto Area. Every figure is an input you control.">
+<meta name="twitter:card" content="summary">
+<style>
+  :root{
+    --bg:#F4F6F3;
+    --surface:#FFFFFF;
+    --ink:#12211C;
+    --muted:#5C6B63;
+    --line:#DBE1DB;
+    --buy:#0E7C66;       /* teal = buy / property */
+    --buy-soft:#E3F1EC;
+    --rent:#C4813A;      /* amber = rent / cash */
+    --rent-soft:#F7ECDD;
+    --warn:#B33A2B;
+    --shadow:0 1px 2px rgba(18,33,28,.06),0 8px 24px rgba(18,33,28,.05);
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--bg);color:var(--ink);font-family:var(--sans);
+    font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1220px;margin:0 auto;padding:28px 20px 80px}
+
+  /* Masthead */
+  header.mast{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:24px;
+    display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+  .mast h1{font-size:clamp(26px,4vw,40px);letter-spacing:-.03em;font-weight:800;margin:0;line-height:1}
+  .mast h1 .b{color:var(--buy)} .mast h1 .r{color:var(--rent)}
+  .mast .sub{color:var(--muted);font-size:13px;max-width:42ch;margin-top:6px}
+  .mast .tag{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 13px;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:7px;text-decoration:none;transition:border-color .15s,color .15s,background .15s}
+  a.tag:hover{border-color:var(--ink);color:var(--ink);background:#fff}
+  a.tag svg{width:15px;height:15px;display:block}
+
+  .grid{display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start}
+  @media(max-width:860px){.grid{grid-template-columns:1fr}}
+
+  /* Controls */
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+  .panel .phead{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line)}
+  .phead .dot{width:9px;height:9px;border-radius:2px}
+  .phead h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;margin:0;color:var(--ink);font-weight:700}
+  .pbody{padding:16px 18px 18px}
+  fieldset{border:0;margin:0 0 6px;padding:0}
+  .seg{display:flex;align-items:center;gap:12px;font-size:13px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--ink);font-weight:700;margin:28px 0 15px;white-space:nowrap}
+  .seg::after{content:"";flex:1 1 auto;height:1px;background:var(--line)}
+  .seg:first-child{margin-top:4px}
+  .field{margin-bottom:12px}
+  .field > label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;font-weight:500}
+  .inrow{position:relative;display:flex;align-items:center}
+  .inrow .pre,.inrow .post{position:absolute;font-family:var(--mono);font-size:12px;color:var(--muted);pointer-events:none}
+  .inrow .pre{left:10px} .inrow .post{right:10px}
+  input[type=number]{width:100%;font-family:var(--mono);font-size:14px;color:var(--ink);background:#fff;
+    border:1px solid var(--line);border-radius:9px;padding:9px 26px 9px 22px;outline:none;transition:border-color .15s,box-shadow .15s}
+  input.nopre{padding-left:10px}
+  input[type=number]:focus{border-color:var(--buy);box-shadow:0 0 0 3px var(--buy-soft)}
+  select{width:100%;font-family:var(--sans);font-size:14px;background:#fff;border:1px solid var(--line);
+    border-radius:9px;padding:9px 10px;outline:none}
+  select:focus{border-color:var(--buy);box-shadow:0 0 0 3px var(--buy-soft)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .toggle{display:flex;gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .toggle button{flex:1;border:0;background:#fff;padding:9px 6px;font-family:var(--sans);font-size:13px;
+    color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
+  .toggle button[aria-pressed=true]{background:var(--ink);color:#fff}
+  .check{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink);cursor:pointer;padding:2px 0}
+  .check input{width:17px;height:17px;accent-color:var(--buy)}
+  .hint{font-size:11.5px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
+  .reset{margin-top:14px;width:100%;border:1px solid var(--line);background:#fff;border-radius:9px;
+    padding:10px;font-size:13px;color:var(--ink);cursor:pointer;font-weight:600}
+  .reset:hover{background:var(--bg)}
+
+  /* Results column */
+  .results{display:flex;flex-direction:column;gap:20px}
+
+  /* upfront strip */
+  .upfront{display:flex;flex-wrap:wrap;gap:10px}
+  .stat{flex:1;min-width:150px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .stat .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .stat .v{font-family:var(--mono);font-size:22px;font-weight:600;margin-top:5px;letter-spacing:-.01em}
+  .stat.buy .v{color:var(--buy)} .stat.rent .v{color:var(--rent)}
+  .stat .note{font-size:11px;color:var(--muted);margin-top:3px}
+  .stat.alarm{border-color:var(--warn)} .stat.alarm .v{color:var(--warn)}
+
+  /* verdict */
+  .verdict{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+    padding:20px 22px}
+  .verdict .head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}
+  .verdict .lead{font-size:clamp(19px,2.6vw,26px);font-weight:800;letter-spacing:-.02em;line-height:1.2}
+  .verdict .lead .amt{font-family:var(--mono)}
+  .verdict .win-buy{color:var(--buy)} .verdict .win-rent{color:var(--rent)}
+  .verdict .cross{font-size:13px;color:var(--muted);font-family:var(--mono)}
+  /* tug bar */
+  .tug{margin-top:16px}
+  .tug .bar{position:relative;height:26px;border-radius:7px;overflow:hidden;background:var(--rent-soft);border:1px solid var(--line)}
+  .tug .fill{position:absolute;left:0;top:0;bottom:0;background:var(--buy);transition:width .5s cubic-bezier(.4,0,.1,1)}
+  .tug .mid{position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;background:var(--ink);opacity:.35}
+  .tug .labels{display:flex;justify-content:space-between;margin-top:7px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .tug .labels .lb{color:var(--buy);font-weight:700} .tug .labels .lr{color:var(--rent);font-weight:700}
+
+  /* chart */
+  .chartcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 16px 10px}
+  .chartcard .ctop{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .chartcard h3{margin:0;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .legend{display:flex;gap:16px;font-size:12px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+  .readout{font-family:var(--mono);font-size:12px;color:var(--muted);min-height:16px;margin:4px 2px 2px}
+  canvas{width:100%;height:340px;display:block;touch-action:pan-y}
+  .fnote{font-size:11px;color:var(--muted);margin:6px 0 2px;line-height:1.5}
+  .fnote b{color:var(--ink);font-weight:600}
+
+  /* breakdown + table */
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media(max-width:640px){.cols{grid-template-columns:1fr}}
+  .mini{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px}
+  .mini h3{margin:0 0 12px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  td.num,th.num{font-family:var(--mono)}
+  tr.total td{border-top:2px solid var(--ink);border-bottom:0;font-weight:700;padding-top:9px}
+  tr.total td.num{font-size:14px}
+  .pos{color:var(--buy)} .neg{color:var(--rent)}
+  .tbl-scroll{overflow-x:auto}
+  .yr-hl{background:var(--buy-soft)}
+
+  details.notes{margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:2px 18px}
+  details.notes summary{cursor:pointer;padding:14px 0;font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--ink)}
+  details.notes .nbody{padding:0 0 16px;font-size:13px;color:var(--muted);line-height:1.65}
+  details.notes .nbody strong{color:var(--ink)}
+  details.notes ul{margin:8px 0;padding-left:18px}
+  footer.foot{margin-top:30px;padding-top:20px;border-top:1px solid var(--line);text-align:center}
+  footer.foot .credit{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.01em;line-height:1.8}
+  footer.foot .credit strong{color:var(--ink)}
+  footer.foot a{color:var(--muted);text-decoration:underline;text-underline-offset:2px;transition:color .15s}
+  footer.foot a:hover{color:var(--ink)}
+  footer.foot .disclaimer{font-size:11px;color:var(--muted);max-width:64ch;margin:10px auto 0;line-height:1.55}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <div>
+      <h1><span class="b">Buy</span> vs <span class="r">Rent</span> — GTA</h1>
+      <div class="sub">A side-by-side cost comparison for the same home in the Greater Toronto Area. Every figure below is an input you control. The outputs update as you adjust them — the decision is yours.</div>
+    </div>
+    <a class="tag" href="https://github.com/sanatchugh/buy-vs-rent-gta" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+  </header>
+
+  <div class="grid">
+
+    <!-- ============ CONTROLS ============ -->
+    <form class="panel" id="ctrl" autocomplete="off">
+      <div class="phead"><span class="dot" style="background:var(--buy)"></span><h2>Inputs</h2></div>
+      <div class="pbody">
+
+        <div class="seg">The place</div>
+        <div class="field">
+          <label>Purchase price</label>
+          <div class="inrow"><span class="pre">$</span><input type="number" id="price" value="900000" step="5000" min="100000" max="1000000"></div>
+        </div>
+        <div class="field">
+          <label>Down payment (cash)</label>
+          <div class="inrow"><span class="pre">$</span><input type="number" id="down" value="65000" step="1000" min="0"></div>
+          <div class="hint" id="downHint"></div>
+        </div>
+        <div class="field">
+          <label>Location (sets land transfer tax)</label>
+          <div class="toggle" id="locTog">
+            <button type="button" data-v="905" aria-pressed="true">905 / suburbs</button>
+            <button type="button" data-v="416" aria-pressed="false">Toronto (416)</button>
+          </div>
+          <div class="hint">Toronto adds a 2nd municipal LTT.</div>
+        </div>
+        <div class="field">
+          <label>Property type</label>
+          <select id="propType">
+            <option value="condo-high">Condo — high-rise / apartment</option>
+            <option value="condo-town">Condo — townhouse</option>
+            <option value="detached">Detached (freehold)</option>
+            <option value="semi" selected>Semi-detached (freehold)</option>
+            <option value="town-free">Freehold townhouse</option>
+          </select>
+          <div class="hint">Sets whether you pay a condo fee or your own upkeep.</div>
+        </div>
+        <label class="check"><input type="checkbox" id="ftb" checked> First-time buyer</label>
+        <div class="hint" id="ftbHint">Unlocks LTT rebate + 30-yr amortization.</div>
+
+        <div class="seg">The mortgage</div>
+        <div class="two">
+          <div class="field">
+            <label>Rate, yrs 1–5</label>
+            <div class="inrow"><input class="nopre" type="number" id="rate1" value="4.09" step="0.05"><span class="post">%</span></div>
+          </div>
+          <div class="field">
+            <label>Rate, yrs 6+</label>
+            <div class="inrow"><input class="nopre" type="number" id="rate2" value="4.50" step="0.05"><span class="post">%</span></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Amortization</label>
+          <div class="toggle" id="amortTog">
+            <button type="button" data-v="30" aria-pressed="true">30 yrs</button>
+            <button type="button" data-v="25" aria-pressed="false">25 yrs</button>
+          </div>
+        </div>
+
+        <div class="seg">Carrying costs &amp; growth</div>
+        <div class="two">
+          <div class="field">
+            <label>Property tax /yr</label>
+            <div class="inrow"><input class="nopre" type="number" id="tax" value="0.90" step="0.05"><span class="post">%</span></div>
+          </div>
+          <div class="field">
+            <label>…grows /yr</label>
+            <div class="inrow"><input class="nopre" type="number" id="taxG" value="4" step="0.5"><span class="post">%</span></div>
+          </div>
+        </div>
+        <div class="fnote" id="noteTax"></div>
+        <div id="condoRow">
+          <div class="two">
+            <div class="field">
+              <label>Condo fee /mo</label>
+              <div class="inrow"><span class="pre">$</span><input type="number" id="fee" value="650" step="25"></div>
+            </div>
+            <div class="field">
+              <label>…grows /yr</label>
+              <div class="inrow"><input class="nopre" type="number" id="feeG" value="4" step="0.5"><span class="post">%</span></div>
+            </div>
+          </div>
+          <div class="fnote" id="noteFee"></div>
+        </div>
+        <div id="maintRow" hidden>
+          <div class="two">
+            <div class="field">
+              <label>Upkeep /yr</label>
+              <div class="inrow"><input class="nopre" type="number" id="maint" value="1.0" step="0.1"><span class="post">%</span></div>
+            </div>
+            <div class="field">
+              <label>…grows /yr</label>
+              <div class="inrow"><input class="nopre" type="number" id="maintG" value="4" step="0.5"><span class="post">%</span></div>
+            </div>
+          </div>
+          <div class="fnote" id="noteMaint"></div>
+        </div>
+        <div class="two">
+          <div class="field">
+            <label>Insurance /yr</label>
+            <div class="inrow"><span class="pre">$</span><input type="number" id="ins" value="1500" step="50"></div>
+          </div>
+          <div class="field">
+            <label>…grows /yr</label>
+            <div class="inrow"><input class="nopre" type="number" id="insG" value="6" step="0.5"><span class="post">%</span></div>
+          </div>
+        </div>
+        <div class="fnote" id="noteIns"></div>
+        <div class="two">
+          <div class="field">
+            <label>Home appreciation /yr</label>
+            <div class="inrow"><input class="nopre" type="number" id="appr" value="3" step="0.5"><span class="post">%</span></div>
+          </div>
+          <div class="field">
+            <label>Cost to sell</label>
+            <div class="inrow"><input class="nopre" type="number" id="sell" value="5.5" step="0.25"><span class="post">%</span></div>
+          </div>
+        </div>
+        <div class="fnote" id="noteAppr"></div>
+        <div class="field">
+          <label>Legal + inspection + title (buy)</label>
+          <div class="inrow"><span class="pre">$</span><input type="number" id="legal" value="2500" step="250"></div>
+        </div>
+
+        <div class="seg">Renting instead</div>
+        <div class="two">
+          <div class="field">
+            <label>Rent /mo</label>
+            <div class="inrow"><span class="pre">$</span><input type="number" id="rent" value="3800" step="50"></div>
+          </div>
+          <div class="field">
+            <label>…grows /yr</label>
+            <div class="inrow"><input class="nopre" type="number" id="rentG" value="3.9" step="0.1"><span class="post">%</span></div>
+          </div>
+        </div>
+        <div class="fnote" id="noteRent"></div>
+        <div class="field">
+          <label>Tenant insurance /mo</label>
+          <div class="inrow"><span class="pre">$</span><input type="number" id="tenIns" value="25" step="5"></div>
+          <div class="hint">Renters' contents + liability. Grows with insurance rate.</div>
+        </div>
+
+        <div class="seg">If you invest instead</div>
+        <div class="field">
+          <label>Amount invested /yr</label>
+          <div class="inrow"><span class="pre">$</span><input type="number" id="investAmt" value="23000" step="1000"></div>
+          <div class="hint">The cash you'd invest each year if renting. Starts at the own-minus-rent gap; edit freely.</div>
+        </div>
+        <div class="two">
+          <div class="field">
+            <label>Return /yr</label>
+            <div class="inrow"><input class="nopre" type="number" id="inv" value="6" step="0.5"><span class="post">%</span></div>
+          </div>
+          <div class="field">
+            <label>Tax on gains</label>
+            <div class="inrow"><input class="nopre" type="number" id="cgt" value="50" step="1"><span class="post">%</span></div>
+          </div>
+        </div>
+        <div class="fnote" id="noteInvest"></div>
+
+        <div class="seg">Decision</div>
+        <div class="two">
+          <div class="field">
+            <label>Your horizon</label>
+            <div class="inrow"><input class="nopre" type="number" id="horizon" value="5" step="1" min="1" max="30"><span class="post">yrs</span></div>
+          </div>
+          <div class="field">
+            <label>Max upfront budget</label>
+            <div class="inrow"><span class="pre">$</span><input type="number" id="budget" value="75000" step="1000"></div>
+          </div>
+        </div>
+
+        <button type="button" class="reset" id="resetBtn">Reset to GTA defaults</button>
+      </div>
+    </form>
+
+    <!-- ============ RESULTS ============ -->
+    <div class="results">
+
+      <div class="upfront" id="upfront"></div>
+
+      <div class="verdict">
+        <div class="head">
+          <div class="lead" id="verdictLead">—</div>
+          <div class="cross" id="crossLine"></div>
+        </div>
+        <div class="tug">
+          <div class="bar"><div class="fill" id="tugFill" style="width:50%"></div><div class="mid"></div></div>
+          <div class="labels"><span class="lb">◀ Buying ahead</span><span class="lr">Renting ahead ▶</span></div>
+        </div>
+      </div>
+
+      <div class="chartcard">
+        <div class="ctop">
+          <h3>Net worth over time</h3>
+          <div class="legend">
+            <span><i style="background:var(--buy)"></i>Buy (equity if sold)</span>
+            <span><i style="background:var(--rent)"></i>Rent + invest</span>
+          </div>
+        </div>
+        <canvas id="chart"></canvas>
+        <div class="readout" id="readout">Hover the chart to inspect any year.</div>
+      </div>
+
+      <div class="cols">
+        <div class="mini">
+          <h3>Monthly cost, year 1</h3>
+          <table id="monthlyTbl"></table>
+        </div>
+        <div class="mini">
+          <h3>Upfront cash to close</h3>
+          <table id="closeTbl"></table>
+        </div>
+      </div>
+
+      <div class="mini">
+        <h3>Year-by-year</h3>
+        <div class="tbl-scroll"><table id="yearTbl"></table></div>
+      </div>
+
+      <details class="notes">
+        <summary>How this works, what it assumes, and where it can go wrong</summary>
+        <div class="nbody">
+          <strong>The comparison.</strong> Both paths begin with the same cash. The buyer puts it into the down payment and closing costs; the renter invests it. Going forward the renter also invests the amount you set under <em>“If you invest instead.”</em> At your horizon the tool compares the buyer's <em>net sale proceeds</em> (home value − mortgage balance − selling costs, tax-free as a principal residence) against the renter's portfolio (contributions grown at your return, minus tax on the gains). The monthly and upfront tables show the cash side so you can see where the money goes.
+          <ul>
+            <li><strong>Forced savings count fairly:</strong> mortgage principal isn't treated as a cost — it lowers the balance and shows up as equity at sale.</li>
+            <li><strong>Land transfer tax</strong> uses Ontario's brackets, plus Toronto's municipal LTT for 416. First-time buyers get up to $4,000 (province) + $4,475 (Toronto).</li>
+            <li><strong>CMHC insurance</strong> (4.0% / 3.1% / 2.8% of the loan for &lt;10% / &lt;15% / &lt;20% down) is added to the mortgage; its 8% Ontario PST is paid upfront. 20%+ down needs no insurance.</li>
+            <li><strong>Mortgage renewal</strong> at year 6 re-amortizes the remaining balance at your “yrs 6+” rate — this is where rate risk appears.</li>
+            <li><strong>Investment tax defaults to 50%</strong> as a proxy for Canada's capital-gains inclusion rate; set it to 0% for a TFSA/FHSA/RRSP. The home's gain is always tax-free.</li>
+          </ul>
+          <strong>Baked-in fixed assumptions</strong> (kept out of the inputs to reduce clutter): a <b>$1,500</b> one-time moving cost on purchase; a <b>$50/mo</b> condo special-assessment reserve (condo types only); a <b>+0.20%</b> CMHC surcharge on a 30-year insured amortization; one month's rent held as a <b>last-month deposit</b> (returned at the end, earning nothing). The purchase is assumed to be <b>resale</b>, so no HST — a <em>new build</em> adds 13% HST, largely offset by the new-housing rebate (net extra varies, not modelled here). Utilities are excluded on both sides as a cost-of-living item (a house typically costs more to heat and cool than a condo). Property-tax history shown is Toronto; 905 cities differ.
+          <p style="margin:14px 0 0"><strong>Where this can go wrong.</strong> The result is only as good as the two biggest assumptions: <b>home appreciation</b> and <b>investment return</b>. Small changes swing the answer a lot.</p>
+          <p style="margin:8px 0 0"><em>Example:</em> a $900k home at the default 3%/yr is worth about <b>$1.04M</b> in 5 years. But GTA prices actually <b>fell ~4.5%</b> in the last year. If instead they drop 2%/yr for 5 years, that same home is worth about <b>$813k</b> — a <b>~$230k</b> swing that turns a 5-year “buying ahead” into “renting clearly ahead.” Flip it the other way (6%/yr) and buying wins far sooner. Set appreciation to 0% and −2% to see your downside before deciding.</p>
+        </div>
+      </details>
+
+      <footer class="foot">
+        <div class="credit">Built by <a href="https://github.com/sanatchugh" target="_blank" rel="noopener">Sanat Chugh</a> with <strong>Claude</strong> (Anthropic) · <a href="./LICENSE" target="_blank" rel="noopener">MIT License</a> · <a href="https://github.com/sanatchugh/buy-vs-rent-gta" target="_blank" rel="noopener">Source on GitHub</a></div>
+        <div class="disclaimer">A decision aid — not financial, tax, or legal advice. Figures are estimates you control and may not reflect your situation; verify rates, taxes, and rebates before deciding. Runs entirely in your browser: nothing is uploaded, stored, or tracked.</div>
+      </footer>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const num = id => parseFloat($(id).value) || 0;
+
+// ---- property types: mode = fee (condo) or maint (freehold) + sensible defaults ----
+const PROP={
+  "condo-high":{mode:"fee", fee:650, ins:700},
+  "condo-town":{mode:"fee", fee:475, ins:750},
+  "detached":  {mode:"maint", maint:1.0, ins:1800},
+  "semi":      {mode:"maint", maint:1.0, ins:1500},
+  "town-free": {mode:"maint", maint:0.9, ins:1300},
+};
+
+// ---- baked-in fixed assumptions (printed in the notes, not editable, to keep inputs lean) ----
+const ASSUME={
+  movingCost:      1500,   // one-time move-in cost on purchase
+  condoReserve:    50,     // $/mo reserve for condo special assessments (condo types only)
+  cmhc30Surcharge: 0.002,  // +0.20% CMHC premium for a 30-yr insured amortization
+  // last-month-rent deposit = 1 month's rent (tied up, returned nominal at the end)
+  // new-build HST/GST: assumed resale purchase, so $0 (new builds differ — see notes)
+};
+
+// ---- state for toggles ----
+const state = { loc:"905", type:"semi", amort:30 };
+
+function bindToggle(elId, key, cb){
+  const el = $(elId);
+  el.addEventListener("click", e=>{
+    const b = e.target.closest("button"); if(!b) return;
+    [...el.children].forEach(x=>x.setAttribute("aria-pressed", x===b));
+    state[key] = b.dataset.v;
+    if(cb) cb();
+    recalc();
+  });
+}
+bindToggle("locTog","loc");
+bindToggle("amortTog","amort");
+
+function applyPropType(prefill){
+  state.type = $("propType").value;
+  const cfg = PROP[state.type];
+  const isFee = cfg.mode==="fee";
+  $("condoRow").hidden = !isFee;
+  $("maintRow").hidden = isFee;
+  if(prefill){
+    if(isFee && cfg.fee!=null) $("fee").value = cfg.fee;
+    if(!isFee && cfg.maint!=null) $("maint").value = cfg.maint;
+    if(cfg.ins!=null) $("ins").value = cfg.ins;
+  }
+}
+$("propType").addEventListener("change", ()=>{ applyPropType(true); recalc(); });
+
+// ---- finance helpers ----
+function ontarioLTT(p){
+  const br=[[55000,.005],[250000,.01],[400000,.015],[2000000,.02],[Infinity,.025]];
+  let tax=0, prev=0;
+  for(const [cap,rate] of br){ if(p>prev){ tax+=(Math.min(p,cap)-prev)*rate; prev=cap;} else break; }
+  return tax;
+}
+function torontoLTT(p){ return ontarioLTT(p); } // same brackets under $2M
+function minDown(p){
+  if(p<=500000) return p*0.05;
+  if(p<1500000) return 25000 + (p-500000)*0.10;
+  return p*0.20;
+}
+function cmhcRate(dp){
+  if(dp>=0.20) return 0;
+  if(dp>=0.15) return 0.028;
+  if(dp>=0.10) return 0.031;
+  return 0.040; // 5–9.99%
+}
+function payment(P, annual, years){
+  const r=annual/100/12, n=years*12;
+  if(P<=0) return 0;
+  if(r===0) return P/n;
+  const f=Math.pow(1+r,n);
+  return P*r*f/(f-1);
+}
+const money = v => (v<0?"-$":"$")+Math.round(Math.abs(v)).toLocaleString("en-CA");
+const moneyK = v => { const a=Math.abs(v); const s=v<0?"-":"";
+  if(a>=1e6) return s+"$"+(a/1e6).toFixed(2)+"M";
+  if(a>=1e3) return s+"$"+Math.round(a/1e3)+"k";
+  return s+"$"+Math.round(a); };
+
+// ---- main simulation ----
+function simulate(){
+  const price=num("price"), down=Math.min(num("down"),price);
+  const dpFrac=down/price;
+  const ftb=$("ftb").checked;
+  const rate1=num("rate1"), rate2=num("rate2"), amort=+state.amort;
+  const taxRate=num("tax")/100, taxG=num("taxG")/100;
+  const condo=PROP[state.type].mode==="fee";
+  const fee=num("fee"), feeG=num("feeG")/100;
+  const maintPct=num("maint")/100, maintG=num("maintG")/100;
+  const insA=num("ins"), insG=num("insG")/100;
+  const appr=num("appr")/100, sell=num("sell")/100, legal=num("legal");
+  const rent0=num("rent"), rentG=num("rentG")/100, tenIns=num("tenIns");
+  const investAmt=num("investAmt"), inv=num("inv")/100, cgt=num("cgt")/100;
+
+  // upfront cash to close (resale assumed → no new-build HST)
+  let cRate=cmhcRate(dpFrac);
+  if(cRate>0 && amort>25) cRate+=ASSUME.cmhc30Surcharge;   // 30-yr insured surcharge, baked in
+  const cmhc = cRate*(price-down);
+  const cmhcPST = cmhc*0.08;
+  let ltt = ontarioLTT(price) + (state.loc==="416" ? torontoLTT(price) : 0);
+  let rebate = 0;
+  if(ftb){ rebate += Math.min(4000, ontarioLTT(price));
+           if(state.loc==="416") rebate += Math.min(4475, torontoLTT(price)); }
+  const lttNet = Math.max(0, ltt - rebate);
+  const moving = ASSUME.movingCost;                        // one-time move-in, baked in
+  const cashToClose = down + lttNet + cmhcPST + legal + moving;
+  const financed = (price-down) + cmhc;
+
+  // renter ties up 1 month's rent as a deposit (returned nominal at the end)
+  const deposit = rent0;
+  const reserve = condo ? ASSUME.condoReserve : 0;         // condo special-assessment reserve
+
+  // BUY: net worth = home sale proceeds (value − balance − selling costs); home gain is tax-free.
+  // RENT: net worth = invested (cash-to-close − deposit) + your annual contributions, taxed on gains,
+  //       plus the deposit returned at the end.
+  const MONTHS=360;
+  let bal=financed;
+  let pay=payment(financed, rate1, amort);
+  let port = cashToClose - deposit;   // renter's starting portfolio
+  let basis = cashToClose - deposit;  // cost basis for capital-gains tax
+  const mR=inv/12, mContrib=investAmt/12;
+  const rows=[];
+
+  function snap(yr, hv, bal){
+    const sale = hv*(1-sell) - bal;
+    const gain = Math.max(0, port - basis);
+    const rNW = port - gain*cgt + deposit;   // deposit returned, untaxed
+    rows.push({yr, hv, bal, equity:hv-bal, sale, bNW:sale, rNW, diff:sale-rNW});
+  }
+  snap(0, price, financed);
+
+  let y1=null;
+  for(let m=1;m<=MONTHS;m++){
+    const yIdx=Math.floor((m-1)/12);
+    if(m===61) pay=payment(bal, rate2, Math.max(1,amort-5));
+    const mrate=(m<=60?rate1:rate2)/100/12;
+    let interest=0, principal=0, piM=0;
+    if(bal>0.005){
+      interest=bal*mrate; principal=pay-interest;
+      if(principal>bal) principal=bal;
+      bal-=principal; piM=interest+principal;
+    }
+    const propTaxM=(price*taxRate)*Math.pow(1+taxG,yIdx)/12;
+    const upkeepM = (condo ? fee + reserve : (price*maintPct)/12) * Math.pow(1+(condo?feeG:maintG),yIdx);
+    const insM=(insA*Math.pow(1+insG,yIdx))/12;
+    const ownM=piM+propTaxM+upkeepM+insM;
+
+    // renter contributes the stated amount monthly
+    port = port*(1+mR) + mContrib;
+    basis += mContrib;
+
+    if(m===1){
+      y1={pi:payment(financed,rate1,amort), tax:price*taxRate/12, up:upkeepM,
+          ins:insA/12, rent:rent0, ten:tenIns, reserve:reserve};
+    }
+    if(m%12===0) snap(m/12, price*Math.pow(1+appr,m/12), bal);
+  }
+
+  return {price,down,dpFrac,cmhc,cmhcPST,cRate,ltt,rebate,lttNet,legal,moving,deposit,
+          cashToClose,financed,minD:minDown(price),condo,rows,y1,ftb,amort,investAmt};
+}
+
+// ---- render ----
+let sim=null;
+function recalc(){
+  sim=simulate();
+  const R=sim.rows;
+  const H=Math.min(30,Math.max(1,Math.round(num("horizon"))));
+  const at=R[H];
+
+  // down payment hint / validation
+  const dh=$("downHint");
+  const pctTxt=(sim.dpFrac*100).toFixed(1)+"% down";
+  if(sim.down < sim.minD-1){
+    dh.style.color="var(--warn)";
+    dh.textContent=`⚠ Below legal minimum (${money(sim.minD)} for this price). ${pctTxt}`;
+  } else {
+    dh.style.color="var(--muted)";
+    const cmhcTxt = sim.dpFrac>=0.20 ? "no CMHC needed" : `CMHC ${ (cmhcRate(sim.dpFrac)*100).toFixed(1) }%`;
+    dh.textContent=`${pctTxt} · ${cmhcTxt}`;
+  }
+  // amort advisory
+  $("ftbHint").textContent = (sim.amort===30 && !sim.ftb && sim.dpFrac<0.20)
+    ? "⚠ Insured 30-yr amortization needs first-time status or a new build."
+    : "Unlocks LTT rebate + 30-yr amortization.";
+
+  // upfront strip
+  const budget=num("budget");
+  const over = sim.cashToClose>budget;
+  $("upfront").innerHTML = `
+    <div class="stat buy ${over?'alarm':''}">
+      <div class="k">Upfront cash</div>
+      <div class="v">${money(sim.cashToClose)}</div>
+      <div class="note">${over?`⚠ ${money(sim.cashToClose-budget)} over your ${money(budget)} budget`:`within ${money(budget)} budget`}</div>
+    </div>
+    <div class="stat buy">
+      <div class="k">Own /mo · yr 1</div>
+      <div class="v">${money(sim.y1.pi+sim.y1.tax+sim.y1.up+sim.y1.ins)}</div>
+      <div class="note">${money(sim.y1.pi)} P&amp;I + ${money(sim.y1.tax+sim.y1.up+sim.y1.ins)} other</div>
+    </div>
+    <div class="stat rent">
+      <div class="k">Rent /mo · yr 1</div>
+      <div class="v">${money(sim.y1.rent)}</div>
+      <div class="note">grows ${num("rentG")}% / yr</div>
+    </div>`;
+
+  // verdict — factual, no persuasion
+  const diff=at.diff;
+  const lead=$("verdictLead");
+  if(Math.abs(diff) < Math.max(3000, at.rNW*0.01)){
+    lead.innerHTML = `About even at ${H} yr <span class="amt" style="color:var(--muted)">(within ${money(Math.abs(diff))})</span>`;
+  } else if(diff>=0){
+    lead.innerHTML = `<span class="win-buy">Buying</span> nets <span class="amt win-buy">${money(diff)}</span> more at ${H} yr`;
+  } else {
+    lead.innerHTML = `<span class="win-rent">Renting</span> nets <span class="amt win-rent">${money(-diff)}</span> more at ${H} yr`;
+  }
+
+  // crossover
+  let cross=null;
+  for(let i=1;i<R.length;i++){ if(R[i].diff>=0){ cross=R[i].yr; break; } }
+  $("crossLine").textContent = cross===null
+    ? "Renting stays ahead through 30 yrs"
+    : (cross<=H ? `Buying moves ahead in year ${cross}` : `Buying moves ahead in year ${cross}`);
+
+  // tug bar — position by relative magnitude at horizon, scaled softly
+  const mag=Math.abs(diff);
+  const scale=Math.max(mag, at.rNW*0.5, 50000);
+  let fillPct = 50 + (diff/scale)*50;
+  fillPct=Math.max(4,Math.min(96,fillPct));
+  $("tugFill").style.width=fillPct+"%";
+
+  // monthly breakdown table
+  const y1=sim.y1;
+  const ownTot=y1.pi+y1.tax+y1.up+y1.ins;
+  const rentTot=y1.rent+y1.ten;
+  const upkeepRows = sim.condo
+    ? `<tr><td>Condo fee</td><td class="num">${money(y1.up-y1.reserve)}</td><td class="num">—</td></tr>
+       <tr><td>Special-assessment reserve</td><td class="num">${money(y1.reserve)}</td><td class="num">—</td></tr>`
+    : `<tr><td>Upkeep</td><td class="num">${money(y1.up)}</td><td class="num">—</td></tr>`;
+  $("monthlyTbl").innerHTML=`
+    <thead><tr><th>Item</th><th class="num">Own</th><th class="num">Rent</th></tr></thead>
+    <tbody>
+      <tr><td>Mortgage P&amp;I</td><td class="num">${money(y1.pi)}</td><td class="num">—</td></tr>
+      <tr><td>Property tax</td><td class="num">${money(y1.tax)}</td><td class="num">—</td></tr>
+      ${upkeepRows}
+      <tr><td>Insurance</td><td class="num">${money(y1.ins)}</td><td class="num">${money(y1.ten)}</td></tr>
+      <tr><td>Rent</td><td class="num">—</td><td class="num">${money(y1.rent)}</td></tr>
+      <tr class="total"><td>Total /mo</td><td class="num">${money(ownTot)}</td><td class="num">${money(rentTot)}</td></tr>
+    </tbody>`;
+
+  // closing table
+  $("closeTbl").innerHTML=`
+    <tbody>
+      <tr><td>Down payment</td><td class="num">${money(sim.down)}</td></tr>
+      <tr><td>Land transfer tax</td><td class="num">${money(sim.ltt)}</td></tr>
+      ${sim.rebate?`<tr><td>First-time rebate</td><td class="num neg">-${money(sim.rebate)}</td></tr>`:''}
+      <tr><td>CMHC tax (8% PST)</td><td class="num">${money(sim.cmhcPST)}</td></tr>
+      <tr><td>Legal / inspection</td><td class="num">${money(sim.legal)}</td></tr>
+      <tr><td>Moving (est.)</td><td class="num">${money(sim.moving)}</td></tr>
+      <tr class="total"><td>Cash to close</td><td class="num">${money(sim.cashToClose)}</td></tr>
+    </tbody>`;
+
+  // year-by-year table (0,1,2,3,5,7,10,15,20,25,30 + horizon)
+  const picks=new Set([0,1,2,3,5,7,10,15,20,25,30,H]);
+  let body="";
+  R.forEach(r=>{
+    if(!picks.has(r.yr)) return;
+    const hl = r.yr===H ? ' class="yr-hl"' : '';
+    body+=`<tr${hl}>
+      <td>${r.yr===H?`<strong>Yr ${r.yr}</strong>`:`Yr ${r.yr}`}</td>
+      <td class="num">${moneyK(r.hv)}</td>
+      <td class="num">${moneyK(r.bal)}</td>
+      <td class="num">${moneyK(r.bNW)}</td>
+      <td class="num">${moneyK(r.rNW)}</td>
+      <td class="num ${r.diff>=0?'pos':'neg'}">${(r.diff>=0?'+':'')+moneyK(r.diff)}</td>
+    </tr>`;
+  });
+  $("yearTbl").innerHTML=`
+    <thead><tr><th>When</th><th class="num">Home value</th><th class="num">Owed</th>
+      <th class="num">Buy net</th><th class="num">Rent net</th><th class="num">Buy − Rent</th></tr></thead>
+    <tbody>${body}</tbody>`;
+
+  drawChart(H);
+}
+
+// ---- canvas chart ----
+const cv=$("chart"), ctx=cv.getContext("2d");
+let chartGeo=null;
+function drawChart(H){
+  const R=sim.rows;
+  const dpr=window.devicePixelRatio||1;
+  const cssW=cv.clientWidth, cssH=340;
+  cv.width=cssW*dpr; cv.height=cssH*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,cssW,cssH);
+
+  const padL=54,padR=14,padT=14,padB=26;
+  const W=cssW-padL-padR, Hh=cssH-padT-padB;
+  const maxYr=30;
+  let maxV=0, minV=0;
+  R.forEach(r=>{ maxV=Math.max(maxV,r.bNW,r.rNW); minV=Math.min(minV,r.bNW,r.rNW); });
+  maxV*=1.06; if(minV>0)minV=0; minV*=1.1;
+  const X=yr=>padL + (yr/maxYr)*W;
+  const Y=v=>padT + (1-(v-minV)/(maxV-minV))*Hh;
+  chartGeo={padL,padR,padT,padB,W,Hh,maxYr,minV,maxV,X,Y};
+
+  // gridlines + y labels
+  ctx.font="11px "+getComputedStyle(document.body).getPropertyValue('--mono');
+  ctx.textBaseline="middle";
+  const steps=5;
+  for(let i=0;i<=steps;i++){
+    const v=minV+(maxV-minV)*i/steps;
+    const y=Y(v);
+    ctx.strokeStyle= (Math.abs(v)<1e-6)?"#B9C2BA":"#EEF1EE";
+    ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+W,y); ctx.stroke();
+    ctx.fillStyle="#7A867E"; ctx.textAlign="right";
+    ctx.fillText(moneyK(v), padL-8, y);
+  }
+  // x labels
+  ctx.textAlign="center"; ctx.textBaseline="top";
+  for(let yr=0;yr<=maxYr;yr+=5){
+    ctx.fillStyle="#7A867E";
+    ctx.fillText(yr+"y", X(yr), padT+Hh+7);
+  }
+  // horizon marker
+  const hx=X(H);
+  ctx.setLineDash([4,4]); ctx.strokeStyle="#12211C"; ctx.globalAlpha=.35;
+  ctx.beginPath(); ctx.moveTo(hx,padT); ctx.lineTo(hx,padT+Hh); ctx.stroke();
+  ctx.globalAlpha=1; ctx.setLineDash([]);
+
+  // line drawer
+  function line(key,color){
+    ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.beginPath();
+    R.forEach((r,i)=>{ const x=X(r.yr),y=Y(r[key]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+    ctx.stroke();
+  }
+  line("rNW","#C4813A");
+  line("bNW","#0E7C66");
+
+  // crossover dot
+  for(let i=1;i<R.length;i++){
+    if(R[i-1].diff<0 && R[i].diff>=0){
+      // linear interp between points
+      const t=(0-R[i-1].diff)/(R[i].diff-R[i-1].diff);
+      const yr=R[i-1].yr+t;
+      const val=R[i-1].bNW+(R[i].bNW-R[i-1].bNW)*t;
+      const x=X(yr),y=Y(val);
+      ctx.fillStyle="#12211C"; ctx.beginPath(); ctx.arc(x,y,4.5,0,7); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(x,y,2,0,7); ctx.fill();
+      break;
+    }
+  }
+  // horizon dots
+  const ath=R[H];
+  [["bNW","#0E7C66"],["rNW","#C4813A"]].forEach(([k,c])=>{
+    ctx.fillStyle=c; ctx.beginPath(); ctx.arc(hx,Y(ath[k]),4,0,7); ctx.fill();
+    ctx.strokeStyle="#fff"; ctx.lineWidth=1.5; ctx.stroke();
+  });
+}
+
+// hover
+cv.addEventListener("pointermove",e=>{
+  if(e.pointerType==="touch") return; // let the finger scroll the page
+  if(!chartGeo||!sim) return;
+  const rect=cv.getBoundingClientRect();
+  const x=e.clientX-rect.left;
+  const g=chartGeo;
+  let yr=Math.round(((x-g.padL)/g.W)*g.maxYr);
+  yr=Math.max(0,Math.min(g.maxYr,yr));
+  const r=sim.rows[yr];
+  $("readout").innerHTML=`Yr ${yr} — Buy <b style="color:var(--buy)">${money(r.bNW)}</b> · Rent <b style="color:var(--rent)">${money(r.rNW)}</b> · gap <b class="${r.diff>=0?'pos':'neg'}">${(r.diff>=0?'+':'')+money(r.diff)}</b>`;
+});
+cv.addEventListener("pointerleave",()=>{ $("readout").textContent="Hover the chart to inspect any year."; });
+
+// historical increase notes — so you don't need to dig back through the chat
+const NOTES={
+  noteTax:'Avg yearly hike, Toronto residential: <b>20y ≈3%</b> · 10y ≈4% · 5y ≈5% · 3y ≈6% · 1y ≈2% (2026, election year). Spiked <b>9.5% in 2024</b> and 6.9% in 2025. 905 cities set their own — often similar or higher.',
+  noteFee:'Avg yearly increase, GTA condos: <b>≈3–4%/yr</b> (2.98% ’21, 2.72% ’22, 5.51% ’23). Watch out: new builds often jump <b>15–30%</b> after year 2–3, and ~⅔ of corps are under-funded (special-assessment risk).',
+  noteMaint:'Tracks construction costs: <b>≈4–5%/yr</b>. Detached build costs rose ~50% over the past decade. Rule of thumb: budget ~1% of home value per year for upkeep.',
+  noteIns:'Avg yearly increase, Ontario home insurance: <b>10y ≈6.3%</b> (+84% total) · 5y ≈7% · 1y <b>+7.2% (2025)</b>, easing to ~2–5% in 2026. Climate-driven and outpacing inflation.',
+  noteAppr:'GTA average price change: <b>20y ≈+6%/yr</b> · 10y ≈+4.6%/yr · 5y ≈+2%/yr · <b>3y ≈−3%/yr</b> · 1y ≈−4.5%. Strongly up long-term, but in a correction right now — try 0% or −2% to stress-test.',
+  noteRent:'Toronto rent change: <b>10y ≈+4.5%/yr</b> · 5y ≈+3%/yr · 1y: <b>3-bed +3.9%</b>, overall ≈−1%. Fell through ’24–’25, now bottoming; older units are rent-controlled, post-2018 units are not.',
+  noteInvest:'A diversified portfolio has historically returned <b>~6–7%/yr</b> long-term (nominal). The <b>50%</b> tax reflects Canada\'s capital-gains inclusion rate as a proxy — a registered account (TFSA / FHSA / RRSP) is closer to <b>0%</b>. The home\'s own gain is always tax-free.',
+};
+Object.entries(NOTES).forEach(([id,t])=>{ const el=$(id); if(el) el.innerHTML=t; });
+
+// suggest an annual investment = the year-1 own-minus-rent gap (matches "invest the difference")
+function gapAnnual(){
+  const s=simulate();
+  const own=s.y1.pi+s.y1.tax+s.y1.up+s.y1.ins;
+  const rent=s.y1.rent+s.y1.ten;
+  return Math.max(0, Math.round((own-rent)*12/500)*500);
+}
+
+// defaults for reset
+const DEFAULTS={price:900000,down:65000,rate1:4.09,rate2:4.50,tax:0.90,taxG:4,fee:650,feeG:4,
+  maint:1.0,maintG:4,ins:1500,insG:6,appr:3,sell:5.5,legal:2500,rent:3800,rentG:3.9,tenIns:25,
+  investAmt:23000,inv:6,cgt:50,horizon:5,budget:75000};
+$("resetBtn").addEventListener("click",()=>{
+  for(const k in DEFAULTS) $(k).value=DEFAULTS[k];
+  $("ftb").checked=true;
+  state.loc="905"; state.type="semi"; state.amort=30;
+  $("propType").value="semi";
+  syncToggles(); applyPropType(false);
+  $("investAmt").value=gapAnnual();
+  recalc();
+});
+function syncToggles(){
+  const map={locTog:state.loc,amortTog:String(state.amort)};
+  for(const [el,val] of Object.entries(map))
+    [...$(el).children].forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===val));
+  $("propType").value=state.type;
+}
+
+// wire inputs
+document.querySelectorAll("#ctrl input").forEach(el=>el.addEventListener("input",recalc));
+window.addEventListener("resize",()=>{ if(sim) drawChart(Math.min(30,Math.round(num("horizon")))); });
+applyPropType(false);
+$("investAmt").value=gapAnnual();  // smart starting value on first load
+recalc();
+</script>
+</body>
+</html>
