@@ -105,6 +105,30 @@
   .presets button:hover{border-color:var(--buy);background:var(--buy-soft);color:var(--buy)}
   .presets + .hint{margin-top:8px}
 
+  /* invest-mode toggle note */
+  .modenote{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.45}
+  input:disabled{background:var(--bg);color:var(--muted);cursor:not-allowed}
+  #investAmtField.off{opacity:.5}
+
+  /* sensitivity heatmap + break-even */
+  .breakeven{font-size:14px;line-height:1.55;margin:0 0 14px;padding:12px 14px;background:var(--bg);border-radius:10px}
+  .breakeven b{font-family:var(--mono)}
+  table.heat{border-collapse:separate;border-spacing:3px;width:100%;min-width:340px}
+  table.heat th{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:700;padding:2px 4px;text-align:center;text-transform:none;letter-spacing:0}
+  table.heat th.cnr{font-size:10px;text-align:right;padding-right:8px;white-space:nowrap}
+  table.heat td{font-family:var(--mono);text-align:center;padding:9px 4px;border-radius:7px;font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap}
+  table.heat td.rowlab{background:none;color:var(--muted);font-weight:700;text-align:right;padding-right:8px}
+  table.heat td.here{outline:2px solid var(--ink);outline-offset:-2px}
+
+  /* scenario compare */
+  .scnbtns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .scnbtns button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;
+    font-family:var(--sans);font-size:13px;color:var(--ink);cursor:pointer;font-weight:600;
+    transition:border-color .15s,background .15s}
+  .scnbtns button:hover{border-color:var(--buy);background:var(--buy-soft)}
+  table.scntbl td.lbl{color:var(--muted);text-align:left}
+  .scn-empty{color:var(--muted);font-size:13px;font-style:italic;line-height:1.5}
+
   /* Results column */
   .results{display:flex;flex-direction:column;gap:20px}
 
@@ -332,6 +356,14 @@
 
         <div class="seg">If you invest instead</div>
         <div class="field">
+          <label>How the renter invests</label>
+          <div class="toggle" id="investModeTog">
+            <button type="button" data-v="fixed" aria-pressed="true">Fixed amount</button>
+            <button type="button" data-v="diff" aria-pressed="false">Actual yearly gap</button>
+          </div>
+          <div class="modenote" id="investModeNote"></div>
+        </div>
+        <div class="field" id="investAmtField">
           <label>Amount invested /yr</label>
           <div class="inrow"><span class="pre">$</span><input type="number" id="investAmt" value="23000" step="1000"></div>
           <div class="hint">The cash you'd invest each year if renting. Starts at the own-minus-rent gap; edit freely.</div>
@@ -392,6 +424,13 @@
         <div class="readout" id="readout">Hover or tap the chart to inspect any year.</div>
       </div>
 
+      <div class="mini" id="sensCard">
+        <h3>How the answer changes</h3>
+        <div class="breakeven" id="breakeven"></div>
+        <div class="tbl-scroll"><table class="heat" id="heat"></table></div>
+        <div class="fnote" id="heatNote"></div>
+      </div>
+
       <div class="cols">
         <div class="mini">
           <h3>Monthly cost, year 1</h3>
@@ -408,6 +447,16 @@
         <div class="tbl-scroll"><table id="yearTbl"></table></div>
       </div>
 
+      <div class="mini" id="scnCard">
+        <h3>Compare scenarios</h3>
+        <div class="scnbtns">
+          <button type="button" id="pinA">Pin current as A</button>
+          <button type="button" id="pinB">Pin current as B</button>
+          <button type="button" id="scnClear">Clear</button>
+        </div>
+        <div class="tbl-scroll" id="scnBody"></div>
+      </div>
+
       <details class="notes">
         <summary>How this works, what it assumes, and where it can go wrong</summary>
         <div class="nbody">
@@ -418,6 +467,8 @@
             <li><strong>CMHC insurance</strong> (4.0% / 3.1% / 2.8% of the loan for &lt;10% / &lt;15% / &lt;20% down) is added to the mortgage; its 8% Ontario PST is paid upfront. 20%+ down needs no insurance.</li>
             <li><strong>Mortgage renewal</strong> at year 6 re-amortizes the remaining balance at your “yrs 6+” rate — this is where rate risk appears.</li>
             <li><strong>Investment tax defaults to 50%</strong> as a proxy for Canada's capital-gains inclusion rate; set it to 0% for a TFSA/FHSA/RRSP. The home's gain is always tax-free.</li>
+            <li><strong>Two ways to invest the difference:</strong> <em>Fixed amount</em> invests the same dollar figure every year (simple, but it overstates the renter's savings late on, since rent keeps rising while the mortgage payment doesn't). <em>Actual yearly gap</em> invests the real month-by-month difference on whichever side is cheaper that year — the renter while owning costs more, the buyer once it costs less. The gap mode is the fairer both-sides comparison.</li>
+            <li><strong>Break-even &amp; the grid.</strong> “How the answer changes” finds the appreciation rate at which buying exactly ties renting, and maps the verdict across a range of appreciation × investment-return — so you see the whole decision space, not one guess. <strong>Compare scenarios</strong> lets you pin two full setups (buy now vs wait, condo vs detached, 5% vs 20% down) side by side.</li>
           </ul>
           <strong>Baked-in fixed assumptions</strong> (kept out of the inputs to reduce clutter): a <b>$1,500</b> one-time moving cost on purchase; a <b>$50/mo</b> condo special-assessment reserve (condo types only); a <b>+0.20%</b> CMHC surcharge on a 30-year insured amortization; one month's rent held as a <b>last-month deposit</b> (returned at the end, earning nothing). The purchase is assumed to be <b>resale</b>, so no HST — a <em>new build</em> adds 13% HST, largely offset by the new-housing rebate (net extra varies, not modelled here). Utilities are excluded on both sides as a cost-of-living item (a house typically costs more to heat and cool than a condo). Property-tax history shown is Toronto; 905 cities differ.
           <p style="margin:14px 0 0"><strong>Where this can go wrong.</strong> The result is only as good as the two biggest assumptions: <b>home appreciation</b> and <b>investment return</b>. Small changes swing the answer a lot.</p>
@@ -457,7 +508,7 @@ const ASSUME={
 };
 
 // ---- state for toggles ----
-const state = { loc:"905", type:"semi", amort:30 };
+const state = { loc:"905", type:"semi", amort:30, investMode:"fixed" };
 
 function bindToggle(elId, key, cb){
   const el = $(elId);
@@ -471,6 +522,17 @@ function bindToggle(elId, key, cb){
 }
 bindToggle("locTog","loc");
 bindToggle("amortTog","amort");
+bindToggle("investModeTog","investMode", syncInvestModeUI);
+
+// grey out the fixed-amount field when the renter invests the actual yearly gap
+function syncInvestModeUI(){
+  const diff = state.investMode==="diff";
+  $("investAmt").disabled = diff;
+  $("investAmtField").classList.toggle("off", diff);
+  $("investModeNote").innerHTML = diff
+    ? "Renter invests the real month-by-month gap between owning and renting. Once owning becomes cheaper (rent keeps rising, the mortgage payment doesn't), the buyer invests the surplus instead — a fairer both-sides comparison."
+    : "Renter invests a fixed amount each year (below). The buyer's only “investment” is home equity.";
+}
 
 function applyPropType(prefill){
   state.type = $("propType").value;
@@ -518,30 +580,47 @@ const moneyK = v => { const a=Math.abs(v); const s=v<0?"-":"";
   if(a>=1e3) return s+"$"+Math.round(a/1e3)+"k";
   return s+"$"+Math.round(a); };
 
-// ---- main simulation ----
-function simulate(){
-  const price=num("price"), down=Math.min(num("down"),price);
+// ---- snapshot every input into a plain object, so the simulator is pure ----
+// (lets us run hypothetical scenarios — break-even, the heatmap, saved scenarios —
+//  without touching the live form.)
+function readInputs(){
+  return {
+    price:num("price"), down:num("down"), ftb:$("ftb").checked,
+    rate1:num("rate1"), rate2:num("rate2"), amort:+state.amort,
+    tax:num("tax"), taxG:num("taxG"), type:state.type, loc:state.loc,
+    fee:num("fee"), feeG:num("feeG"), maint:num("maint"), maintG:num("maintG"),
+    ins:num("ins"), insG:num("insG"), appr:num("appr"), sell:num("sell"), legal:num("legal"),
+    rent:num("rent"), rentG:num("rentG"), tenIns:num("tenIns"),
+    investAmt:num("investAmt"), inv:num("inv"), cgt:num("cgt"),
+    investMode:state.investMode, horizon:num("horizon"), budget:num("budget"),
+  };
+}
+
+// ---- main simulation (pure: reads only its `inp` argument) ----
+function simulate(inp){
+  const price=inp.price, down=Math.min(inp.down,price);
   const dpFrac=down/price;
-  const ftb=$("ftb").checked;
-  const rate1=num("rate1"), rate2=num("rate2"), amort=+state.amort;
-  const taxRate=num("tax")/100, taxG=num("taxG")/100;
-  const condo=PROP[state.type].mode==="fee";
-  const fee=num("fee"), feeG=num("feeG")/100;
-  const maintPct=num("maint")/100, maintG=num("maintG")/100;
-  const insA=num("ins"), insG=num("insG")/100;
-  const appr=num("appr")/100, sell=num("sell")/100, legal=num("legal");
-  const rent0=num("rent"), rentG=num("rentG")/100, tenIns=num("tenIns");
-  const investAmt=num("investAmt"), inv=num("inv")/100, cgt=num("cgt")/100;
+  const ftb=inp.ftb;
+  const rate1=inp.rate1, rate2=inp.rate2, amort=inp.amort;
+  const taxRate=inp.tax/100, taxG=inp.taxG/100;
+  const condo=PROP[inp.type].mode==="fee";
+  const fee=inp.fee, feeG=inp.feeG/100;
+  const maintPct=inp.maint/100, maintG=inp.maintG/100;
+  const insA=inp.ins, insG=inp.insG/100;
+  const appr=inp.appr/100, sell=inp.sell/100, legal=inp.legal;
+  const rent0=inp.rent, rentG=inp.rentG/100, tenIns0=inp.tenIns;
+  const investAmt=inp.investAmt, inv=inp.inv/100, cgt=inp.cgt/100;
+  const diffMode = inp.investMode==="diff";
 
   // upfront cash to close (resale assumed → no new-build HST)
   let cRate=cmhcRate(dpFrac);
   if(cRate>0 && amort>25) cRate+=ASSUME.cmhc30Surcharge;   // 30-yr insured surcharge, baked in
   const cmhc = cRate*(price-down);
   const cmhcPST = cmhc*0.08;
-  let ltt = ontarioLTT(price) + (state.loc==="416" ? torontoLTT(price) : 0);
+  let ltt = ontarioLTT(price) + (inp.loc==="416" ? torontoLTT(price) : 0);
   let rebate = 0;
   if(ftb){ rebate += Math.min(4000, ontarioLTT(price));
-           if(state.loc==="416") rebate += Math.min(4475, torontoLTT(price)); }
+           if(inp.loc==="416") rebate += Math.min(4475, torontoLTT(price)); }
   const lttNet = Math.max(0, ltt - rebate);
   const moving = ASSUME.movingCost;                        // one-time move-in, baked in
   const cashToClose = down + lttNet + cmhcPST + legal + moving;
@@ -551,22 +630,26 @@ function simulate(){
   const deposit = rent0;
   const reserve = condo ? ASSUME.condoReserve : 0;         // condo special-assessment reserve
 
-  // BUY: net worth = home sale proceeds (value − balance − selling costs); home gain is tax-free.
-  // RENT: net worth = invested (cash-to-close − deposit) + your annual contributions, taxed on gains,
-  //       plus the deposit returned at the end.
+  // BUY  net worth = home sale proceeds (value − balance − selling costs, tax-free)
+  //                  + a side portfolio (only funded in "actual gap" mode, taxed).
+  // RENT net worth = the cash the buyer sank into closing, invested and grown, taxed on gains,
+  //                  + ongoing contributions, + the deposit returned at the end.
   const MONTHS=360;
   let bal=financed;
   let pay=payment(financed, rate1, amort);
-  let port = cashToClose - deposit;   // renter's starting portfolio
-  let basis = cashToClose - deposit;  // cost basis for capital-gains tax
+  let rport = cashToClose - deposit;   // renter's starting portfolio
+  let rbasis = cashToClose - deposit;  // renter's cost basis for capital-gains tax
+  let bport = 0, bbasis = 0;           // buyer's side portfolio (diff mode only)
   const mR=inv/12, mContrib=investAmt/12;
   const rows=[];
 
   function snap(yr, hv, bal){
     const sale = hv*(1-sell) - bal;
-    const gain = Math.max(0, port - basis);
-    const rNW = port - gain*cgt + deposit;   // deposit returned, untaxed
-    rows.push({yr, hv, bal, equity:hv-bal, sale, bNW:sale, rNW, diff:sale-rNW});
+    const rgain = Math.max(0, rport - rbasis);
+    const rNW = rport - rgain*cgt + deposit;          // deposit returned, untaxed
+    const bgain = Math.max(0, bport - bbasis);
+    const bNW = sale + bport - bgain*cgt;             // home gain tax-free; side portfolio taxed
+    rows.push({yr, hv, bal, equity:hv-bal, sale, bNW, rNW, diff:bNW-rNW});
   }
   snap(0, price, financed);
 
@@ -585,28 +668,36 @@ function simulate(){
     const upkeepM = (condo ? fee + reserve : (price*maintPct)/12) * Math.pow(1+(condo?feeG:maintG),yIdx);
     const insM=(insA*Math.pow(1+insG,yIdx))/12;
     const ownM=piM+propTaxM+upkeepM+insM;
+    const rentM=rent0*Math.pow(1+rentG,yIdx) + tenIns0*Math.pow(1+insG,yIdx);
 
-    // renter contributes the stated amount monthly
-    port = port*(1+mR) + mContrib;
-    basis += mContrib;
+    // grow both portfolios one month, then add this month's contribution
+    rport*=1+mR; bport*=1+mR;
+    if(diffMode){
+      const d=ownM-rentM;                 // + = owning costs more → renter invests it
+      if(d>=0){ rport+=d; rbasis+=d; }     // − = renting costs more → buyer invests the surplus
+      else    { bport-=d; bbasis-=d; }
+    } else {
+      rport+=mContrib; rbasis+=mContrib;
+    }
 
     if(m===1){
       y1={pi:payment(financed,rate1,amort), tax:price*taxRate/12, up:upkeepM,
-          ins:insA/12, rent:rent0, ten:tenIns, reserve:reserve};
+          ins:insA/12, rent:rent0, ten:tenIns0, reserve:reserve};
     }
     if(m%12===0) snap(m/12, price*Math.pow(1+appr,m/12), bal);
   }
 
   return {price,down,dpFrac,cmhc,cmhcPST,cRate,ltt,rebate,lttNet,legal,moving,deposit,
-          cashToClose,financed,minD:minDown(price),condo,rows,y1,ftb,amort,investAmt};
+          cashToClose,financed,minD:minDown(price),condo,rows,y1,ftb,amort,investAmt,diffMode};
 }
 
 // ---- render ----
-let sim=null;
+let sim=null, curInp=null;
 function recalc(){
-  sim=simulate();
+  curInp=readInputs();
+  sim=simulate(curInp);
   const R=sim.rows;
-  const H=Math.min(30,Math.max(1,Math.round(num("horizon"))));
+  const H=Math.min(30,Math.max(1,Math.round(curInp.horizon)));
   const at=R[H];
 
   // down payment hint / validation
@@ -626,7 +717,7 @@ function recalc(){
     : "Unlocks LTT rebate + 30-yr amortization.";
 
   // upfront strip
-  const budget=num("budget");
+  const budget=curInp.budget;
   const over = sim.cashToClose>budget;
   $("upfront").innerHTML = `
     <div class="stat buy ${over?'alarm':''}">
@@ -642,7 +733,7 @@ function recalc(){
     <div class="stat rent">
       <div class="k">Rent /mo · yr 1</div>
       <div class="v">${money(sim.y1.rent)}</div>
-      <div class="note">grows ${num("rentG")}% / yr</div>
+      <div class="note">grows ${curInp.rentG}% / yr</div>
     </div>`;
 
   // verdict — factual, no persuasion
@@ -722,6 +813,56 @@ function recalc(){
     <tbody>${body}</tbody>`;
 
   drawChart(H);
+  renderSensitivity(curInp, H);
+}
+
+// ---- break-even appreciation + sensitivity heatmap ----
+// The tool's whole thesis is that appreciation and investment return decide the answer.
+// Break-even finds the appreciation rate at which buying exactly ties renting; the grid
+// shows the verdict across a range of both levers at once.
+function breakEven(base, H){
+  const f = a => simulate(Object.assign({}, base, {appr:a})).rows[H].diff;
+  let lo=-10, hi=30;               // diff rises monotonically with appreciation
+  if(f(lo)>=0) return {below:true}; // buying wins even at −10%/yr
+  if(f(hi)<0)  return {above:true}; // renting wins even at +30%/yr
+  for(let i=0;i<44;i++){ const mid=(lo+hi)/2; if(f(mid)>=0) hi=mid; else lo=mid; }
+  return {rate:(lo+hi)/2};
+}
+const APPR_ROWS=[6,4,3,2,0,-2];   // appreciation %/yr, high → low (top = buy-favourable)
+const INV_COLS=[4,5,6,7,8];       // investment return %/yr, low → high (right = rent-favourable)
+function renderSensitivity(base, H){
+  // break-even sentence
+  const be=breakEven(base,H), a=base.appr, beEl=$("breakeven");
+  if(be.below){
+    beEl.innerHTML=`At your other inputs, <b class="pos">buying is already ahead</b> at ${H} yr — even if home prices <b>fall 10%/yr</b>. Appreciation isn't the swing factor in this scenario.`;
+  } else if(be.above){
+    beEl.innerHTML=`At your other inputs, <b class="neg">renting stays ahead</b> at ${H} yr across any realistic appreciation — buying wouldn't catch up even at <b>+30%/yr</b>.`;
+  } else {
+    const r=be.rate, ahead=a>=r;
+    beEl.innerHTML=`Buying breaks even at ${H} yr when the home appreciates about <b>${r.toFixed(1)}%/yr</b>. You've assumed <b>${a.toFixed(1)}%</b> — `
+      + (ahead ? `<span class="pos">above break-even, so buying comes out ahead.</span>` : `<span class="neg">below break-even, so renting comes out ahead.</span>`);
+  }
+
+  // grid of Buy − Rent gaps at the horizon
+  let maxAbs=1;
+  const cells=APPR_ROWS.map(ar=>INV_COLS.map(ic=>{
+    const d=simulate(Object.assign({}, base, {appr:ar, inv:ic})).rows[H].diff;
+    maxAbs=Math.max(maxAbs,Math.abs(d)); return d;
+  }));
+  const nearRow=APPR_ROWS.reduce((b,v,i)=>Math.abs(v-base.appr)<Math.abs(APPR_ROWS[b]-base.appr)?i:b,0);
+  const nearCol=INV_COLS.reduce((b,v,i)=>Math.abs(v-base.inv)<Math.abs(INV_COLS[b]-base.inv)?i:b,0);
+
+  let html=`<thead><tr><th class="cnr">Appr ↓ / Return →</th>${INV_COLS.map(v=>`<th>${v}%</th>`).join("")}</tr></thead><tbody>`;
+  cells.forEach((row,ri)=>{
+    html+=`<tr><td class="rowlab">${APPR_ROWS[ri]}%</td>`+row.map((d,ci)=>{
+      const alpha=(0.10+Math.min(1,Math.abs(d)/maxAbs)*0.55).toFixed(2);
+      const rgb=d>=0?"14,124,102":"196,129,58";
+      const here=(ri===nearRow&&ci===nearCol)?" here":"";
+      return `<td class="cell${here}" style="background:rgba(${rgb},${alpha})">${(d>=0?"+":"")+moneyK(d)}</td>`;
+    }).join("")+`</tr>`;
+  });
+  $("heat").innerHTML=html+`</tbody>`;
+  $("heatNote").innerHTML=`Each cell is <b>Buy − Rent</b> net worth at year ${H}. <span class="pos">Teal</span> = buying ahead, <span class="neg">amber</span> = renting ahead. The <b>outlined</b> cell is closest to your inputs (appreciation ${base.appr}%, return ${base.inv}%). Everything else is held at your current values.`;
 }
 
 // ---- canvas chart ----
@@ -831,7 +972,7 @@ Object.entries(NOTES).forEach(([id,t])=>{ const el=$(id); if(el) el.innerHTML=t;
 
 // suggest an annual investment = the year-1 own-minus-rent gap (matches "invest the difference")
 function gapAnnual(){
-  const s=simulate();
+  const s=simulate(readInputs());
   const own=s.y1.pi+s.y1.tax+s.y1.up+s.y1.ins;
   const rent=s.y1.rent+s.y1.ten;
   return Math.max(0, Math.round((own-rent)*12/500)*500);
@@ -844,17 +985,18 @@ const DEFAULTS={price:900000,down:90000,rate1:4.09,rate2:4.50,tax:0.90,taxG:4,fe
 $("resetBtn").addEventListener("click",()=>{
   for(const k in DEFAULTS) $(k).value=DEFAULTS[k];
   $("ftb").checked=true;
-  state.loc="905"; state.type="semi"; state.amort=30;
+  state.loc="905"; state.type="semi"; state.amort=30; state.investMode="fixed";
   $("propType").value="semi";
-  syncToggles(); applyPropType(false);
+  applyPropType(false); syncToggles();
   $("investAmt").value=gapAnnual();
   recalc();
 });
 function syncToggles(){
-  const map={locTog:state.loc,amortTog:String(state.amort)};
+  const map={locTog:state.loc,amortTog:String(state.amort),investModeTog:state.investMode};
   for(const [el,val] of Object.entries(map))
     [...$(el).children].forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===val));
   $("propType").value=state.type;
+  syncInvestModeUI();
 }
 
 // ---- quick-start presets: typical GTA scenarios to skip the blank-slate ----
@@ -889,11 +1031,78 @@ PRESETS.forEach(p=>{
   presetWrap.appendChild(b);
 });
 
+// ---- scenario A/B compare: pin two full input sets and see them side by side ----
+const scenarios={A:null,B:null};
+const TYPE_LABEL={"condo-high":"Condo","condo-town":"Condo TH","detached":"Detached","semi":"Semi","town-free":"Towhouse"};
+function scnName(inp){
+  const dp=Math.round(inp.down/inp.price*100);
+  const mode=inp.investMode==="diff"?" · gap-invest":"";
+  return `${TYPE_LABEL[inp.type]||inp.type} · ${moneyK(inp.price)} · ${dp}% down · ${inp.loc} · ${inp.appr}% appr · ${Math.round(inp.horizon)}yr${mode}`;
+}
+function scnSummary(inp){
+  const s=simulate(inp);
+  const H=Math.min(30,Math.max(1,Math.round(inp.horizon)));
+  const at=s.rows[H];
+  let cross=null; for(let i=1;i<s.rows.length;i++){ if(s.rows[i].diff>=0){cross=s.rows[i].yr;break;} }
+  const be=breakEven(inp,H);
+  return {H, cash:s.cashToClose, own:s.y1.pi+s.y1.tax+s.y1.up+s.y1.ins, rent:s.y1.rent+s.y1.ten,
+          bNW:at.bNW, rNW:at.rNW, diff:at.diff, cross,
+          be: be.below?"≤ −10%" : be.above?"> +30%" : be.rate.toFixed(1)+"%"};
+}
+function renderScenarios(){
+  const body=$("scnBody");
+  const cols=["A","B"].filter(k=>scenarios[k]);
+  if(!cols.length){
+    body.innerHTML=`<div class="scn-empty">Pin two scenarios to compare them side by side — e.g. buy now vs wait, condo vs detached, or 5% vs 20% down. Set up the first, click “Pin current as A”, change your inputs, then pin B.</div>`;
+    return;
+  }
+  const sums={}; cols.forEach(k=>sums[k]=scnSummary(scenarios[k].inp));
+  const rowsDef=[
+    ["Scenario",           k=>scenarios[k].name],
+    ["Horizon",            k=>sums[k].H+" yr"],
+    ["Upfront cash",       k=>money(sums[k].cash)],
+    ["Own /mo · yr 1",     k=>money(sums[k].own)],
+    ["Rent /mo · yr 1",    k=>money(sums[k].rent)],
+    ["Buy net @ horizon",  k=>moneyK(sums[k].bNW)],
+    ["Rent net @ horizon", k=>moneyK(sums[k].rNW)],
+    ["Verdict @ horizon",  k=>{const d=sums[k].diff; return `<span class="${d>=0?'pos':'neg'}">${(d>=0?'Buy +':'Rent +')+moneyK(Math.abs(d))}</span>`;}],
+    ["Crossover",          k=>sums[k].cross===null?"never (30 yr)":"yr "+sums[k].cross],
+    ["Break-even appr.",   k=>sums[k].be],
+  ];
+  let html=`<table class="scntbl"><thead><tr><th></th>${cols.map(k=>`<th class="num">${k}</th>`).join("")}</tr></thead><tbody>`;
+  rowsDef.forEach(([lbl,fn])=>{
+    html+=`<tr><td class="lbl">${lbl}</td>${cols.map(k=>`<td class="num">${fn(k)}</td>`).join("")}</tr>`;
+  });
+  html+=`</tbody></table><div class="scnbtns" style="margin-top:12px">`
+      + cols.map(k=>`<button type="button" data-load="${k}">Load ${k} into the form</button>`).join("")
+      + `</div>`;
+  body.innerHTML=html;
+  body.querySelectorAll("[data-load]").forEach(b=>b.addEventListener("click",()=>applyInputs(scenarios[b.dataset.load].inp)));
+}
+function pin(slot){ const inp=readInputs(); scenarios[slot]={inp,name:scnName(inp)}; renderScenarios(); }
+$("pinA").addEventListener("click",()=>pin("A"));
+$("pinB").addEventListener("click",()=>pin("B"));
+$("scnClear").addEventListener("click",()=>{ scenarios.A=scenarios.B=null; renderScenarios(); });
+
+// restore a full input set into the form (used by scenario "Load")
+function applyInputs(inp){
+  ["price","down","rate1","rate2","tax","taxG","fee","feeG","maint","maintG","ins","insG",
+   "appr","sell","legal","rent","rentG","tenIns","investAmt","inv","cgt","horizon","budget"]
+    .forEach(k=>{ if(inp[k]!=null) $(k).value=inp[k]; });
+  $("ftb").checked=!!inp.ftb;
+  state.loc=inp.loc; state.amort=+inp.amort; state.type=inp.type; state.investMode=inp.investMode||"fixed";
+  $("propType").value=inp.type;
+  applyPropType(false); syncToggles();
+  recalc();
+}
+
 // wire inputs
 document.querySelectorAll("#ctrl input").forEach(el=>el.addEventListener("input",recalc));
 window.addEventListener("resize",()=>{ if(sim) drawChart(Math.min(30,Math.round(num("horizon")))); });
 applyPropType(false);
-$("investAmt").value=gapAnnual();  // smart starting value on first load
+syncInvestModeUI();               // set toggle note + field state on load
+renderScenarios();                // empty-state prompt
+$("investAmt").value=gapAnnual(); // smart starting value on first load
 recalc();
 </script>
 </body>

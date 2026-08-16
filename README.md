@@ -34,14 +34,16 @@ Open the site and work down the panel on the left. As you change any figure, the
    - The **verdict** — who is ahead at your chosen horizon, and by how much.
    - The **crossover year** — when (if ever) buying pulls ahead of renting.
    - The **net-worth chart** — both paths over 30 years; hover (or tap, on mobile) any year to inspect it.
+   - **How the answer changes** — the **break-even appreciation rate** (the growth at which buying exactly ties renting) plus a **sensitivity grid** showing the verdict across a range of appreciation × investment return, so you see the whole decision space at once.
    - The **monthly** and **upfront cash** breakdowns, and a **year-by-year** table.
 5. **Stress-test it** — set appreciation to 0% and −2% to see the downside, and try different investment returns. This is where the real decision lives.
+6. **Compare two options** — pin any setup as **A**, change your inputs, pin **B**, and see them side by side (buy now vs wait, condo vs detached, 5% vs 20% down).
 
 Your numbers never leave your browser — nothing is uploaded, stored, or tracked.
 
 ## How the comparison works
 
-Both paths start with the same cash. The buyer puts it into the **down payment + closing costs**; the renter invests it. Going forward, the renter also invests a yearly amount you specify (defaulted to the own-minus-rent gap — i.e. "invest the difference").
+Both paths start with the same cash. The buyer puts it into the **down payment + closing costs**; the renter invests it. Going forward, the renter also invests the difference between owning and renting. You can do this two ways: a **fixed amount** each year (defaulted to the own-minus-rent gap), or the **actual yearly gap** — the real month-by-month difference on whichever side is cheaper that year (the renter while owning costs more; the buyer once it costs less). The actual-gap mode is the fairer both-sides comparison, since a fixed amount overstates the renter's savings once rent outgrows the fixed mortgage payment.
 
 At your chosen horizon the tool compares:
 
