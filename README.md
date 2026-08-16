@@ -26,13 +26,14 @@ It's deliberately **neutral**: it makes no recommendation. It shows the numbers;
 
 Open the site and work down the panel on the left. As you change any figure, the results on the right update instantly.
 
+0. **(Optional) Start from a preset** — the **Quick start** buttons load a typical GTA scenario (first-time condo in the 416, a 905 townhouse, a Toronto semi, a 905 detached) so you're not staring at a blank slate. Then adjust anything below.
 1. **Describe the place** — purchase price, how much you can put down, location (905 vs Toronto/416), and property type. The tool flags if your down payment is below the legal minimum or your upfront cash exceeds your budget.
 2. **Set your assumptions** — mortgage rate (with a separate renewal rate for year 6+), property tax, condo fees or upkeep, insurance, home appreciation, rent, and rent growth. Each field shows how fast that cost has actually grown over the past 1–20 years, so your inputs aren't guesses.
 3. **Set the investment alternative** — how much you'd invest each year if you rented instead, your expected return, and the tax on gains.
 4. **Read the results:**
    - The **verdict** — who is ahead at your chosen horizon, and by how much.
    - The **crossover year** — when (if ever) buying pulls ahead of renting.
-   - The **net-worth chart** — both paths over 30 years; hover any year to inspect it.
+   - The **net-worth chart** — both paths over 30 years; hover (or tap, on mobile) any year to inspect it.
    - The **monthly** and **upfront cash** breakdowns, and a **year-by-year** table.
 5. **Stress-test it** — set appreciation to 0% and −2% to see the downside, and try different investment returns. This is where the real decision lives.
 
