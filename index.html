@@ -97,6 +97,14 @@
     padding:10px;font-size:13px;color:var(--ink);cursor:pointer;font-weight:600}
   .reset:hover{background:var(--bg)}
 
+  /* quick-start presets */
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:2px}
+  .presets button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;
+    font-family:var(--sans);font-size:12.5px;color:var(--ink);cursor:pointer;
+    transition:border-color .15s,background .15s,color .15s}
+  .presets button:hover{border-color:var(--buy);background:var(--buy-soft);color:var(--buy)}
+  .presets + .hint{margin-top:8px}
+
   /* Results column */
   .results{display:flex;flex-direction:column;gap:20px}
 
@@ -184,10 +192,14 @@
       <div class="phead"><span class="dot" style="background:var(--buy)"></span><h2>Inputs</h2></div>
       <div class="pbody">
 
+        <div class="seg">Quick start</div>
+        <div class="presets" id="presets"></div>
+        <div class="hint">Loads a typical GTA scenario — then adjust anything below.</div>
+
         <div class="seg">The place</div>
         <div class="field">
           <label>Purchase price</label>
-          <div class="inrow"><span class="pre">$</span><input type="number" id="price" value="900000" step="5000" min="100000" max="1000000"></div>
+          <div class="inrow"><span class="pre">$</span><input type="number" id="price" value="900000" step="5000" min="100000" max="2000000"></div>
         </div>
         <div class="field">
           <label>Down payment (cash)</label>
@@ -377,7 +389,7 @@
           </div>
         </div>
         <canvas id="chart"></canvas>
-        <div class="readout" id="readout">Hover the chart to inspect any year.</div>
+        <div class="readout" id="readout">Hover or tap the chart to inspect any year.</div>
       </div>
 
       <div class="cols">
@@ -787,19 +799,23 @@ function drawChart(H){
   });
 }
 
-// hover
-cv.addEventListener("pointermove",e=>{
-  if(e.pointerType==="touch") return; // let the finger scroll the page
+// inspect a year — works for mouse (hover) and touch (tap / drag).
+// touch-action:pan-y (set in CSS) lets vertical page scroll pass through,
+// while horizontal drags along the chart are delivered here to inspect.
+function inspectAt(clientX){
   if(!chartGeo||!sim) return;
   const rect=cv.getBoundingClientRect();
-  const x=e.clientX-rect.left;
+  const x=clientX-rect.left;
   const g=chartGeo;
   let yr=Math.round(((x-g.padL)/g.W)*g.maxYr);
   yr=Math.max(0,Math.min(g.maxYr,yr));
   const r=sim.rows[yr];
   $("readout").innerHTML=`Yr ${yr} — Buy <b style="color:var(--buy)">${money(r.bNW)}</b> · Rent <b style="color:var(--rent)">${money(r.rNW)}</b> · gap <b class="${r.diff>=0?'pos':'neg'}">${(r.diff>=0?'+':'')+money(r.diff)}</b>`;
-});
-cv.addEventListener("pointerleave",()=>{ $("readout").textContent="Hover the chart to inspect any year."; });
+}
+cv.addEventListener("pointermove", e=>inspectAt(e.clientX));
+cv.addEventListener("pointerdown", e=>inspectAt(e.clientX)); // tap-to-inspect on touch
+// clear the readout when the mouse leaves; on touch, keep the last value visible
+cv.addEventListener("pointerleave", e=>{ if(e.pointerType!=="touch") $("readout").textContent="Hover or tap the chart to inspect any year."; });
 
 // historical increase notes — so you don't need to dig back through the chat
 const NOTES={
@@ -840,6 +856,38 @@ function syncToggles(){
     [...$(el).children].forEach(b=>b.setAttribute("aria-pressed", b.dataset.v===val));
   $("propType").value=state.type;
 }
+
+// ---- quick-start presets: typical GTA scenarios to skip the blank-slate ----
+// Each sets location, property type and first-time status, then overrides a few
+// fields; everything else falls back to the standard GTA defaults.
+const PRESETS=[
+  {name:"First-time condo · 416", loc:"416", type:"condo-high", ftb:true,
+   fields:{price:600000, down:60000, rent:2500, fee:600, budget:90000, horizon:5}},
+  {name:"Townhouse · 905", loc:"905", type:"town-free", ftb:true,
+   fields:{price:850000, down:85000, rent:3200, horizon:5}},
+  {name:"Semi · Toronto", loc:"416", type:"semi", ftb:false,
+   fields:{price:1100000, down:220000, rent:4200, budget:280000, horizon:7}},
+  {name:"Detached · 905", loc:"905", type:"detached", ftb:false,
+   fields:{price:1200000, down:240000, rent:3800, budget:300000, horizon:7}},
+];
+function applyPreset(p){
+  for(const k in DEFAULTS) $(k).value=DEFAULTS[k];   // reset unspecified fields
+  state.loc=p.loc; state.amort=30; state.type=p.type;
+  $("propType").value=p.type;
+  $("ftb").checked=p.ftb;
+  applyPropType(true);                                // pull fee/upkeep/insurance defaults for the type
+  for(const [k,v] of Object.entries(p.fields)) $(k).value=v;
+  syncToggles();
+  $("investAmt").value=gapAnnual();
+  recalc();
+}
+const presetWrap=$("presets");
+PRESETS.forEach(p=>{
+  const b=document.createElement("button");
+  b.type="button"; b.textContent=p.name;
+  b.addEventListener("click",()=>applyPreset(p));
+  presetWrap.appendChild(b);
+});
 
 // wire inputs
 document.querySelectorAll("#ctrl input").forEach(el=>el.addEventListener("input",recalc));
