@@ -17,8 +17,8 @@
 <title>Buy vs Rent — GTA Comparison</title>
 <meta name="description" content="A free, open-source calculator comparing the total cost of buying versus renting the same home in the Greater Toronto Area — mortgage, taxes, fees, appreciation, and the investment alternative. Runs entirely in your browser.">
 <meta name="author" content="Sanat Chugh & Claude (Anthropic)">
-<meta name="theme-color" content="#0E7C66">
-<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzBFN0M2NiIvPjxwYXRoIGQ9Ik0xNiA2LjVsOSA3djExLjVoLTUuNXYtNi41aC03djYuNUg3VjEzLjV6IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iMjEuNSIgeT0iNiIgd2lkdGg9IjMiIGhlaWdodD0iNiIgcng9IjEiIGZpbGw9IiNDNDgxM0EiLz48L3N2Zz4=">
+<meta name="theme-color" content="#2A66E0">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzJBNjZFMCIvPjxwYXRoIGQ9Ik0xNiA2LjVsOSA3djExLjVoLTUuNXYtNi41aC03djYuNUg3VjEzLjV6IiBmaWxsPSIjZmZmIi8+PHJlY3QgeD0iMjEuNSIgeT0iNiIgd2lkdGg9IjMiIGhlaWdodD0iNiIgcng9IjEiIGZpbGw9IiNERDhBM0EiLz48L3N2Zz4=">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Buy vs Rent — GTA Comparison">
 <meta property="og:description" content="A free, open-source rent-vs-buy calculator for the Greater Toronto Area. Every figure is an input you control.">
@@ -29,28 +29,28 @@
   /* ---------- LIGHT (default) ---------- */
   :root{
     color-scheme:light;
-    --bg:#F3F6F3;
-    --bg-tint:#E9EFEA;      /* inset panels (break-even box, disabled fields) */
+    --bg:#F5F7FA;
+    --bg-tint:#EAEEF5;      /* inset panels (break-even box, disabled fields) */
     --surface:#FFFFFF;
     --input-bg:#FFFFFF;
-    --ink:#12211C;
-    --muted:#5B6A62;
-    --line:#DBE2DC;
-    --line-strong:#C4CEC6;
-    --rule:#12211C;         /* strong editorial dividers (masthead, totals) */
-    --buy:#0E7C66;          /* teal = buy / property */
-    --buy-soft:#E1F0EA;
-    --rent:#C4813A;         /* amber = rent / cash */
-    --rent-soft:#F6EBDB;
-    --warn:#B33A2B;
+    --ink:#0F1B2D;
+    --muted:#5A6675;
+    --line:#E1E6EE;
+    --line-strong:#C6CEDB;
+    --rule:#0F1B2D;         /* strong editorial dividers (masthead, totals) */
+    --buy:#2A66E0;          /* blue = buy / property */
+    --buy-soft:#E4ECFB;
+    --rent:#DD8A3A;         /* orange = rent / cash */
+    --rent-soft:#FBEEDD;
+    --warn:#C0392B;
     --on-accent:#FFFFFF;    /* text on an ink-filled control */
-    --focus:rgba(14,124,102,.20);
-    --chart-grid:#EDF1ED;
-    --chart-zero:#B7C2BA;
-    --chart-axis:#7A867E;
+    --focus:rgba(42,102,224,.22);
+    --chart-grid:#EAEEF4;
+    --chart-zero:#B4BECC;
+    --chart-axis:#79879A;
     --chart-dotcore:#FFFFFF;
-    --shadow:0 1px 2px rgba(18,33,28,.05),0 8px 26px rgba(18,33,28,.06);
-    --shadow-sm:0 1px 2px rgba(18,33,28,.06);
+    --shadow:0 1px 2px rgba(15,27,45,.05),0 8px 26px rgba(15,27,45,.06);
+    --shadow-sm:0 1px 2px rgba(15,27,45,.06);
     --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",Menlo,Consolas,monospace;
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
@@ -58,25 +58,25 @@
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
       color-scheme:dark;
-      --bg:#0C1310; --bg-tint:#14201B; --surface:#131E19; --input-bg:#0F1814;
-      --ink:#E7ECE8; --muted:#90A098; --line:#26332D; --line-strong:#35473D; --rule:#46584E;
-      --buy:#38BB9E; --buy-soft:#123B31; --rent:#E0A45E; --rent-soft:#382817; --warn:#E9705F;
-      --on-accent:#0C1310; --focus:rgba(56,187,158,.28);
-      --chart-grid:#202C27; --chart-zero:#3A4C44; --chart-axis:#8B998F; --chart-dotcore:#131E19;
-      --shadow:0 1px 2px rgba(0,0,0,.5),0 12px 32px rgba(0,0,0,.4);
-      --shadow-sm:0 1px 2px rgba(0,0,0,.5);
+      --bg:#0B1220; --bg-tint:#131C2E; --surface:#121B2C; --input-bg:#0E1626;
+      --ink:#E8EDF6; --muted:#93A0B2; --line:#24304A; --line-strong:#38486A; --rule:#46567A;
+      --buy:#6EA4FF; --buy-soft:#16294A; --rent:#F0A860; --rent-soft:#3A2B17; --warn:#EF6F63;
+      --on-accent:#0B1220; --focus:rgba(110,164,255,.30);
+      --chart-grid:#1E2940; --chart-zero:#38486A; --chart-axis:#8593A8; --chart-dotcore:#121B2C;
+      --shadow:0 1px 2px rgba(0,0,0,.55),0 12px 32px rgba(0,0,0,.42);
+      --shadow-sm:0 1px 2px rgba(0,0,0,.55);
     }
   }
   /* ---------- DARK (explicit toggle wins in both directions) ---------- */
   :root[data-theme="dark"]{
     color-scheme:dark;
-    --bg:#0C1310; --bg-tint:#14201B; --surface:#131E19; --input-bg:#0F1814;
-    --ink:#E7ECE8; --muted:#90A098; --line:#26332D; --line-strong:#35473D; --rule:#46584E;
-    --buy:#38BB9E; --buy-soft:#123B31; --rent:#E0A45E; --rent-soft:#382817; --warn:#E9705F;
-    --on-accent:#0C1310; --focus:rgba(56,187,158,.28);
-    --chart-grid:#202C27; --chart-zero:#3A4C44; --chart-axis:#8B998F; --chart-dotcore:#131E19;
-    --shadow:0 1px 2px rgba(0,0,0,.5),0 12px 32px rgba(0,0,0,.4);
-    --shadow-sm:0 1px 2px rgba(0,0,0,.5);
+    --bg:#0B1220; --bg-tint:#131C2E; --surface:#121B2C; --input-bg:#0E1626;
+    --ink:#E8EDF6; --muted:#93A0B2; --line:#24304A; --line-strong:#38486A; --rule:#46567A;
+    --buy:#6EA4FF; --buy-soft:#16294A; --rent:#F0A860; --rent-soft:#3A2B17; --warn:#EF6F63;
+    --on-accent:#0B1220; --focus:rgba(110,164,255,.30);
+    --chart-grid:#1E2940; --chart-zero:#38486A; --chart-axis:#8593A8; --chart-dotcore:#121B2C;
+    --shadow:0 1px 2px rgba(0,0,0,.55),0 12px 32px rgba(0,0,0,.42);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.55);
   }
   *{box-sizing:border-box}
   html,body{margin:0}
@@ -904,6 +904,9 @@ function renderSensitivity(base, H){
   }
 
   // grid of Buy − Rent gaps at the horizon
+  const cs=getComputedStyle(document.body), hexRgb=n=>{n=n.trim().replace("#","");
+    return `${parseInt(n.slice(0,2),16)},${parseInt(n.slice(2,4),16)},${parseInt(n.slice(4,6),16)}`;};
+  const RGB_BUY=hexRgb(cs.getPropertyValue("--buy")), RGB_RENT=hexRgb(cs.getPropertyValue("--rent"));
   let maxAbs=1;
   const cells=APPR_ROWS.map(ar=>INV_COLS.map(ic=>{
     const d=simulate(Object.assign({}, base, {appr:ar, inv:ic})).rows[H].diff;
@@ -916,7 +919,7 @@ function renderSensitivity(base, H){
   cells.forEach((row,ri)=>{
     html+=`<tr><td class="rowlab">${APPR_ROWS[ri]}%</td>`+row.map((d,ci)=>{
       const alpha=(0.10+Math.min(1,Math.abs(d)/maxAbs)*0.55).toFixed(2);
-      const rgb=d>=0?"14,124,102":"196,129,58";
+      const rgb=d>=0?RGB_BUY:RGB_RENT;
       const here=(ri===nearRow&&ci===nearCol)?" here":"";
       return `<td class="cell${here}" style="background:rgba(${rgb},${alpha})">${(d>=0?"+":"")+moneyK(d)}</td>`;
     }).join("")+`</tr>`;
@@ -1164,7 +1167,12 @@ function applyInputs(inp){
 // ---- theme toggle (persisted; falls back to the OS setting when unset) ----
 const themeMeta=document.querySelector('meta[name="theme-color"]');
 const prefersDark=window.matchMedia("(prefers-color-scheme:dark)");
-const redrawChart=()=>{ if(sim) drawChart(Math.min(30,Math.max(1,Math.round(num("horizon"))))); };
+const redrawChart=()=>{
+  if(!sim) return;
+  const H=Math.min(30,Math.max(1,Math.round(num("horizon"))));
+  drawChart(H);
+  if(curInp) renderSensitivity(curInp, H);   // heatmap uses inline theme colors — refresh them
+};
 function currentTheme(){
   const forced=document.documentElement.getAttribute("data-theme");
   return forced || (prefersDark.matches ? "dark" : "light");
