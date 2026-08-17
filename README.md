@@ -24,7 +24,7 @@ It's deliberately **neutral**: it makes no recommendation. It shows the numbers;
 
 ## How to use it
 
-Open the site and work down the panel on the left. As you change any figure, the results on the right update instantly.
+Open the site and work down the panel on the left. As you change any figure, the results on the right update instantly. It opens in **Simple** mode — just the essentials (price, down payment, location, property type, rent, horizon), with every other assumption pre-filled from real GTA data and tucked into collapsible groups that show what they assume. Flip to **Advanced** to expand everything. On a phone, the verdict and chart appear first, above the inputs.
 
 0. **(Optional) Start from a preset** — the **Quick start** buttons load a typical GTA scenario (first-time condo in the 416, a 905 townhouse, a Toronto semi, a 905 detached) so you're not staring at a blank slate. Then adjust anything below.
 1. **Describe the place** — purchase price, how much you can put down, location (905 vs Toronto/416), and property type. The tool flags if your down payment is below the legal minimum or your upfront cash exceeds your budget.
