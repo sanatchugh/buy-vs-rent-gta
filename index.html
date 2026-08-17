@@ -23,41 +23,95 @@
 <meta property="og:title" content="Buy vs Rent — GTA Comparison">
 <meta property="og:description" content="A free, open-source rent-vs-buy calculator for the Greater Toronto Area. Every figure is an input you control.">
 <meta name="twitter:card" content="summary">
+<script>/* apply saved theme before first paint to avoid a flash */
+(function(){try{var t=localStorage.getItem("bvr-theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
 <style>
+  /* ---------- LIGHT (default) ---------- */
   :root{
-    --bg:#F4F6F3;
+    color-scheme:light;
+    --bg:#F3F6F3;
+    --bg-tint:#E9EFEA;      /* inset panels (break-even box, disabled fields) */
     --surface:#FFFFFF;
+    --input-bg:#FFFFFF;
     --ink:#12211C;
-    --muted:#5C6B63;
-    --line:#DBE1DB;
-    --buy:#0E7C66;       /* teal = buy / property */
-    --buy-soft:#E3F1EC;
-    --rent:#C4813A;      /* amber = rent / cash */
-    --rent-soft:#F7ECDD;
+    --muted:#5B6A62;
+    --line:#DBE2DC;
+    --line-strong:#C4CEC6;
+    --rule:#12211C;         /* strong editorial dividers (masthead, totals) */
+    --buy:#0E7C66;          /* teal = buy / property */
+    --buy-soft:#E1F0EA;
+    --rent:#C4813A;         /* amber = rent / cash */
+    --rent-soft:#F6EBDB;
     --warn:#B33A2B;
-    --shadow:0 1px 2px rgba(18,33,28,.06),0 8px 24px rgba(18,33,28,.05);
+    --on-accent:#FFFFFF;    /* text on an ink-filled control */
+    --focus:rgba(14,124,102,.20);
+    --chart-grid:#EDF1ED;
+    --chart-zero:#B7C2BA;
+    --chart-axis:#7A867E;
+    --chart-dotcore:#FFFFFF;
+    --shadow:0 1px 2px rgba(18,33,28,.05),0 8px 26px rgba(18,33,28,.06);
+    --shadow-sm:0 1px 2px rgba(18,33,28,.06);
     --mono:ui-monospace,"SF Mono","Cascadia Mono","JetBrains Mono",Menlo,Consolas,monospace;
     --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  /* ---------- DARK (system preference, unless user forced light) ---------- */
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      color-scheme:dark;
+      --bg:#0C1310; --bg-tint:#14201B; --surface:#131E19; --input-bg:#0F1814;
+      --ink:#E7ECE8; --muted:#90A098; --line:#26332D; --line-strong:#35473D; --rule:#46584E;
+      --buy:#38BB9E; --buy-soft:#123B31; --rent:#E0A45E; --rent-soft:#382817; --warn:#E9705F;
+      --on-accent:#0C1310; --focus:rgba(56,187,158,.28);
+      --chart-grid:#202C27; --chart-zero:#3A4C44; --chart-axis:#8B998F; --chart-dotcore:#131E19;
+      --shadow:0 1px 2px rgba(0,0,0,.5),0 12px 32px rgba(0,0,0,.4);
+      --shadow-sm:0 1px 2px rgba(0,0,0,.5);
+    }
+  }
+  /* ---------- DARK (explicit toggle wins in both directions) ---------- */
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#0C1310; --bg-tint:#14201B; --surface:#131E19; --input-bg:#0F1814;
+    --ink:#E7ECE8; --muted:#90A098; --line:#26332D; --line-strong:#35473D; --rule:#46584E;
+    --buy:#38BB9E; --buy-soft:#123B31; --rent:#E0A45E; --rent-soft:#382817; --warn:#E9705F;
+    --on-accent:#0C1310; --focus:rgba(56,187,158,.28);
+    --chart-grid:#202C27; --chart-zero:#3A4C44; --chart-axis:#8B998F; --chart-dotcore:#131E19;
+    --shadow:0 1px 2px rgba(0,0,0,.5),0 12px 32px rgba(0,0,0,.4);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.5);
   }
   *{box-sizing:border-box}
   html,body{margin:0}
   body{
     background:var(--bg);color:var(--ink);font-family:var(--sans);
     font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+    transition:background-color .25s ease,color .25s ease;
   }
+  /* smooth, uniform fade only while the theme is switching */
+  html.theme-anim, html.theme-anim *{transition:background-color .25s ease,border-color .25s ease,color .25s ease,box-shadow .25s ease,fill .25s ease !important}
   .wrap{max-width:1220px;margin:0 auto;padding:28px 20px 80px}
 
   /* Masthead */
-  header.mast{border-bottom:2px solid var(--ink);padding-bottom:14px;margin-bottom:24px;
+  header.mast{border-bottom:2px solid var(--rule);padding-bottom:14px;margin-bottom:24px;
     display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
   .mast h1{font-size:clamp(34px,5.5vw,56px);letter-spacing:-.035em;font-weight:800;margin:0;line-height:1.02}
   .mast h1 .b{color:var(--buy)} .mast h1 .r{color:var(--rent)}
   .mast .sub{color:var(--muted);font-size:13px;max-width:42ch;margin-top:6px}
+  .mast .actions{display:flex;align-items:center;gap:10px}
   .mast .tag{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;
     color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 13px;white-space:nowrap;
     display:inline-flex;align-items:center;gap:7px;text-decoration:none;transition:border-color .15s,color .15s,background .15s}
-  a.tag:hover{border-color:var(--ink);color:var(--ink);background:#fff}
+  a.tag:hover{border-color:var(--ink);color:var(--ink);background:var(--surface)}
   a.tag svg{width:15px;height:15px;display:block}
+  .themebtn{width:38px;height:38px;flex:none;display:inline-flex;align-items:center;justify-content:center;
+    border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);cursor:pointer;
+    transition:border-color .15s,color .15s,background .15s}
+  .themebtn:hover{border-color:var(--ink);color:var(--ink)}
+  .themebtn svg{width:18px;height:18px;display:block}
+  .themebtn .moon{display:none} .themebtn .sun{display:block}
+  :root[data-theme="dark"] .themebtn .moon{display:block} :root[data-theme="dark"] .themebtn .sun{display:none}
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]) .themebtn .moon{display:block}
+    :root:not([data-theme="light"]) .themebtn .sun{display:none}
+  }
 
   .grid{display:grid;grid-template-columns:340px 1fr;gap:24px;align-items:start}
   @media(max-width:860px){.grid{grid-template-columns:1fr}}
@@ -78,28 +132,28 @@
   .inrow{position:relative;display:flex;align-items:center}
   .inrow .pre,.inrow .post{position:absolute;font-family:var(--mono);font-size:12px;color:var(--muted);pointer-events:none}
   .inrow .pre{left:10px} .inrow .post{right:10px}
-  input[type=number]{width:100%;font-family:var(--mono);font-size:14px;color:var(--ink);background:#fff;
+  input[type=number]{width:100%;font-family:var(--mono);font-size:14px;color:var(--ink);background:var(--input-bg);
     border:1px solid var(--line);border-radius:9px;padding:9px 26px 9px 22px;outline:none;transition:border-color .15s,box-shadow .15s}
   input.nopre{padding-left:10px}
-  input[type=number]:focus{border-color:var(--buy);box-shadow:0 0 0 3px var(--buy-soft)}
-  select{width:100%;font-family:var(--sans);font-size:14px;background:#fff;border:1px solid var(--line);
-    border-radius:9px;padding:9px 10px;outline:none}
-  select:focus{border-color:var(--buy);box-shadow:0 0 0 3px var(--buy-soft)}
+  input[type=number]:focus{border-color:var(--buy);box-shadow:0 0 0 3px var(--focus)}
+  select{width:100%;font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--input-bg);border:1px solid var(--line);
+    border-radius:9px;padding:9px 10px;outline:none;transition:border-color .15s,box-shadow .15s}
+  select:focus{border-color:var(--buy);box-shadow:0 0 0 3px var(--focus)}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .toggle{display:flex;gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden}
-  .toggle button{flex:1;border:0;background:#fff;padding:9px 6px;font-family:var(--sans);font-size:13px;
+  .toggle button{flex:1;border:0;background:var(--surface);padding:9px 6px;font-family:var(--sans);font-size:13px;
     color:var(--muted);cursor:pointer;transition:background .12s,color .12s}
-  .toggle button[aria-pressed=true]{background:var(--ink);color:#fff}
+  .toggle button[aria-pressed=true]{background:var(--ink);color:var(--on-accent)}
   .check{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink);cursor:pointer;padding:2px 0}
   .check input{width:17px;height:17px;accent-color:var(--buy)}
   .hint{font-size:11.5px;color:var(--muted);margin-top:3px;font-family:var(--mono)}
-  .reset{margin-top:14px;width:100%;border:1px solid var(--line);background:#fff;border-radius:9px;
-    padding:10px;font-size:13px;color:var(--ink);cursor:pointer;font-weight:600}
-  .reset:hover{background:var(--bg)}
+  .reset{margin-top:14px;width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;
+    padding:10px;font-size:13px;color:var(--ink);cursor:pointer;font-weight:600;transition:background .15s,border-color .15s}
+  .reset:hover{background:var(--bg-tint);border-color:var(--line-strong)}
 
   /* quick-start presets */
   .presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:2px}
-  .presets button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 12px;
+  .presets button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;
     font-family:var(--sans);font-size:12.5px;color:var(--ink);cursor:pointer;
     transition:border-color .15s,background .15s,color .15s}
   .presets button:hover{border-color:var(--buy);background:var(--buy-soft);color:var(--buy)}
@@ -107,11 +161,11 @@
 
   /* invest-mode toggle note */
   .modenote{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.45}
-  input:disabled{background:var(--bg);color:var(--muted);cursor:not-allowed}
+  input:disabled{background:var(--bg-tint);color:var(--muted);cursor:not-allowed}
   #investAmtField.off{opacity:.5}
 
   /* sensitivity heatmap + break-even */
-  .breakeven{font-size:14px;line-height:1.55;margin:0 0 14px;padding:12px 14px;background:var(--bg);border-radius:10px}
+  .breakeven{font-size:14px;line-height:1.55;margin:0 0 14px;padding:12px 14px;background:var(--bg-tint);border-radius:10px}
   .breakeven b{font-family:var(--mono)}
   table.heat{border-collapse:separate;border-spacing:3px;width:100%;min-width:340px}
   table.heat th{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:700;padding:2px 4px;text-align:center;text-transform:none;letter-spacing:0}
@@ -122,7 +176,7 @@
 
   /* scenario compare */
   .scnbtns{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-  .scnbtns button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;
+  .scnbtns button{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 12px;
     font-family:var(--sans);font-size:13px;color:var(--ink);cursor:pointer;font-weight:600;
     transition:border-color .15s,background .15s}
   .scnbtns button:hover{border-color:var(--buy);background:var(--buy-soft)}
@@ -179,7 +233,7 @@
   th:first-child,td:first-child{text-align:left}
   thead th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
   td.num,th.num{font-family:var(--mono)}
-  tr.total td{border-top:2px solid var(--ink);border-bottom:0;font-weight:700;padding-top:9px}
+  tr.total td{border-top:2px solid var(--rule);border-bottom:0;font-weight:700;padding-top:9px}
   tr.total td.num{font-size:14px}
   .pos{color:var(--buy)} .neg{color:var(--rent)}
   .tbl-scroll{overflow-x:auto}
@@ -206,7 +260,13 @@
       <h1><span class="b">Buy</span> vs <span class="r">Rent</span> — GTA</h1>
       <div class="sub">A side-by-side cost comparison for the same home in the Greater Toronto Area. Every figure below is an input you control. The outputs update as you adjust them — the decision is yours.</div>
     </div>
-    <a class="tag" href="https://github.com/sanatchugh/buy-vs-rent-gta" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+    <div class="actions">
+      <a class="tag" href="https://github.com/sanatchugh/buy-vs-rent-gta" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>View on GitHub</a>
+      <button type="button" class="themebtn" id="themeBtn" title="Toggle dark / light" aria-label="Toggle dark or light theme">
+        <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.5M12 19v2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M2.5 12h2.5M19 12h2.5M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></svg>
+        <svg class="moon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a7 7 0 1 0 11 11z"/></svg>
+      </button>
+    </div>
   </header>
 
   <div class="grid">
@@ -886,27 +946,32 @@ function drawChart(H){
   const Y=v=>padT + (1-(v-minV)/(maxV-minV))*Hh;
   chartGeo={padL,padR,padT,padB,W,Hh,maxYr,minV,maxV,X,Y};
 
+  // pull colors from the active theme so the chart tracks dark / light
+  const cs=getComputedStyle(document.body), C=n=>cs.getPropertyValue(n).trim();
+  const cGrid=C('--chart-grid'), cZero=C('--chart-zero'), cAxis=C('--chart-axis'),
+        cInk=C('--ink'), cBuy=C('--buy'), cRent=C('--rent'), cDot=C('--chart-dotcore');
+
   // gridlines + y labels
-  ctx.font="11px "+getComputedStyle(document.body).getPropertyValue('--mono');
+  ctx.font="11px "+C('--mono');
   ctx.textBaseline="middle";
   const steps=5;
   for(let i=0;i<=steps;i++){
     const v=minV+(maxV-minV)*i/steps;
     const y=Y(v);
-    ctx.strokeStyle= (Math.abs(v)<1e-6)?"#B9C2BA":"#EEF1EE";
+    ctx.strokeStyle= (Math.abs(v)<1e-6)?cZero:cGrid;
     ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+W,y); ctx.stroke();
-    ctx.fillStyle="#7A867E"; ctx.textAlign="right";
+    ctx.fillStyle=cAxis; ctx.textAlign="right";
     ctx.fillText(moneyK(v), padL-8, y);
   }
   // x labels
   ctx.textAlign="center"; ctx.textBaseline="top";
   for(let yr=0;yr<=maxYr;yr+=5){
-    ctx.fillStyle="#7A867E";
+    ctx.fillStyle=cAxis;
     ctx.fillText(yr+"y", X(yr), padT+Hh+7);
   }
   // horizon marker
   const hx=X(H);
-  ctx.setLineDash([4,4]); ctx.strokeStyle="#12211C"; ctx.globalAlpha=.35;
+  ctx.setLineDash([4,4]); ctx.strokeStyle=cInk; ctx.globalAlpha=.35;
   ctx.beginPath(); ctx.moveTo(hx,padT); ctx.lineTo(hx,padT+Hh); ctx.stroke();
   ctx.globalAlpha=1; ctx.setLineDash([]);
 
@@ -916,8 +981,8 @@ function drawChart(H){
     R.forEach((r,i)=>{ const x=X(r.yr),y=Y(r[key]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
     ctx.stroke();
   }
-  line("rNW","#C4813A");
-  line("bNW","#0E7C66");
+  line("rNW",cRent);
+  line("bNW",cBuy);
 
   // crossover dot
   for(let i=1;i<R.length;i++){
@@ -927,16 +992,16 @@ function drawChart(H){
       const yr=R[i-1].yr+t;
       const val=R[i-1].bNW+(R[i].bNW-R[i-1].bNW)*t;
       const x=X(yr),y=Y(val);
-      ctx.fillStyle="#12211C"; ctx.beginPath(); ctx.arc(x,y,4.5,0,7); ctx.fill();
-      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(x,y,2,0,7); ctx.fill();
+      ctx.fillStyle=cInk; ctx.beginPath(); ctx.arc(x,y,4.5,0,7); ctx.fill();
+      ctx.fillStyle=cDot; ctx.beginPath(); ctx.arc(x,y,2,0,7); ctx.fill();
       break;
     }
   }
   // horizon dots
   const ath=R[H];
-  [["bNW","#0E7C66"],["rNW","#C4813A"]].forEach(([k,c])=>{
+  [["bNW",cBuy],["rNW",cRent]].forEach(([k,c])=>{
     ctx.fillStyle=c; ctx.beginPath(); ctx.arc(hx,Y(ath[k]),4,0,7); ctx.fill();
-    ctx.strokeStyle="#fff"; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.strokeStyle=cDot; ctx.lineWidth=1.5; ctx.stroke();
   });
 }
 
@@ -1095,6 +1160,28 @@ function applyInputs(inp){
   applyPropType(false); syncToggles();
   recalc();
 }
+
+// ---- theme toggle (persisted; falls back to the OS setting when unset) ----
+const themeMeta=document.querySelector('meta[name="theme-color"]');
+const prefersDark=window.matchMedia("(prefers-color-scheme:dark)");
+const redrawChart=()=>{ if(sim) drawChart(Math.min(30,Math.max(1,Math.round(num("horizon"))))); };
+function currentTheme(){
+  const forced=document.documentElement.getAttribute("data-theme");
+  return forced || (prefersDark.matches ? "dark" : "light");
+}
+function setTheme(t){
+  const root=document.documentElement;
+  root.classList.add("theme-anim");
+  root.setAttribute("data-theme", t);
+  try{ localStorage.setItem("bvr-theme", t); }catch(e){}
+  if(themeMeta) themeMeta.setAttribute("content",
+    getComputedStyle(document.body).getPropertyValue(t==="dark"?"--bg":"--buy").trim() || "#0E7C66");
+  redrawChart();
+  setTimeout(()=>root.classList.remove("theme-anim"), 300);
+}
+$("themeBtn").addEventListener("click", ()=> setTheme(currentTheme()==="dark" ? "light" : "dark"));
+// if the OS theme flips while the user hasn't forced one, keep the chart in sync
+prefersDark.addEventListener("change", ()=>{ if(!document.documentElement.getAttribute("data-theme")) redrawChart(); });
 
 // wire inputs
 document.querySelectorAll("#ctrl input").forEach(el=>el.addEventListener("input",recalc));
